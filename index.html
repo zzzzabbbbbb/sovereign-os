@@ -40,6 +40,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .s-bar{width:60px;height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
 .s-barf{height:100%;transition:width .4s ease,background .3s}
 
+/* Tabs */
+.s-tabs{display:flex;border-bottom:.5px solid var(--border)}
+.s-tab{flex:1;background:none;border:none;padding:.6rem;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px;border-bottom:1.5px solid transparent;transition:all .15s}
+.s-tab.active{color:var(--text);border-bottom-color:var(--text)}
+
 /* Nav */
 .s-nav{display:flex;align-items:center;gap:8px;padding:.6rem 1.25rem;border-bottom:.5px solid var(--border)}
 .s-nb{background:none;border:.5px solid var(--border2);border-radius:7px;padding:5px 13px;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;transition:all .15s}
@@ -47,6 +52,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .s-nd{font-size:11px;color:var(--hint);flex:1;letter-spacing:1px}
 .s-tag{font-size:10px;padding:2px 8px;border-radius:6px;background:var(--green-bg);color:var(--green);border:.5px solid var(--green-border)}
 .s-loading{font-size:11px;color:var(--hint);letter-spacing:1px}
+.s-save-btn{background:none;border:.5px solid var(--border2);border-radius:7px;padding:5px 10px;cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.5px;transition:all .2s}
+.s-save-btn:hover{border-color:var(--green-border);color:var(--green)}
+.s-save-btn.saved{border-color:var(--green-border);color:var(--green)}
 
 /* Blocks */
 .s-blocks{padding:.75rem 1.25rem 0}
@@ -79,6 +87,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .s-fl{font-size:11px;color:var(--hint);letter-spacing:1px;line-height:1.8}
 .s-fn{font-family:var(--display);font-size:92px;line-height:.85;transition:color .3s}
 .s-fd{font-family:var(--display);font-size:34px;color:var(--hint);align-self:flex-end;padding-bottom:7px}
+
+/* Dashboard */
+#dashboard{display:none;padding:.75rem 1.25rem}
+.d-week-title{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:.75rem;padding-top:.25rem}
+.d-loading{font-size:12px;color:var(--hint);letter-spacing:1px;text-align:center;padding:2rem 0}
+.d-row{display:flex;align-items:center;gap:12px;padding:.65rem 0;border-bottom:.5px solid var(--border)}
+.d-row:last-child{border-bottom:none}
+.d-day{font-family:var(--display);font-size:22px;letter-spacing:1px;width:90px;flex-shrink:0}
+.d-day.today{color:var(--green)}
+.d-right{flex:1;display:flex;flex-direction:column;gap:5px}
+.d-top{display:flex;justify-content:space-between;align-items:baseline}
+.d-date{font-size:10px;color:var(--hint);letter-spacing:.5px}
+.d-score{font-family:var(--display);font-size:18px}
+.d-bar-wrap{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.d-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.d-empty{font-size:10px;color:var(--border2);letter-spacing:1px}
+.d-summary{margin-top:1rem;padding:1rem;border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface);display:flex;justify-content:space-between;align-items:center}
+.d-sum-label{font-size:10px;color:var(--hint);letter-spacing:1px;line-height:1.8}
+.d-sum-val{font-family:var(--display);font-size:48px;line-height:1;transition:color .3s}
+.d-sum-pct{font-size:10px;color:var(--muted);margin-top:3px;text-align:right}
 </style>
 </head>
 <body>
@@ -102,26 +130,42 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
       <div class="s-bar"><div class="s-barf" id="h-bar"></div></div>
     </div>
   </div>
-  <div class="s-nav">
-    <button class="s-nb" id="btn-prev">←</button>
-    <span class="s-nd" id="h-type">—</span>
-    <span class="s-tag" id="h-today" style="display:none">Hoy</span>
-    <span class="s-loading" id="h-loading" style="display:none">···</span>
-    <button class="s-nb" id="btn-next">→</button>
+
+  <div class="s-tabs">
+    <button class="s-tab active" id="tab-day" onclick="showTab('day')">Día</button>
+    <button class="s-tab" id="tab-dash" onclick="showTab('dash')">Dashboard</button>
   </div>
-  <div class="s-blocks" id="blocks-container"></div>
-  <div style="padding:0 1.25rem">
-    <div class="s-log">
-      <div class="s-lh">Log</div>
-      <textarea class="s-ta" id="log-ta" placeholder="Registro técnico del día" rows="4"></textarea>
+
+  <!-- Day view -->
+  <div id="day-view">
+    <div class="s-nav">
+      <button class="s-nb" id="btn-prev">←</button>
+      <span class="s-nd" id="h-type">—</span>
+      <span class="s-tag" id="h-today" style="display:none">Hoy</span>
+      <span class="s-loading" id="h-loading" style="display:none">···</span>
+      <button class="s-save-btn" id="btn-save">Guardar</button>
+      <button class="s-nb" id="btn-next">→</button>
+    </div>
+    <div class="s-blocks" id="blocks-container"></div>
+    <div style="padding:0 1.25rem">
+      <div class="s-log">
+        <div class="s-lh">Log</div>
+        <textarea class="s-ta" id="log-ta" placeholder="Registro técnico del día" rows="4"></textarea>
+      </div>
+    </div>
+    <div class="s-foot">
+      <div class="s-fl">Score<br>del día</div>
+      <div style="display:flex;align-items:flex-end;gap:4px">
+        <div class="s-fn" id="f-score">0</div>
+        <div class="s-fd" id="f-max">/15</div>
+      </div>
     </div>
   </div>
-  <div class="s-foot">
-    <div class="s-fl">Score<br>del día</div>
-    <div style="display:flex;align-items:flex-end;gap:4px">
-      <div class="s-fn" id="f-score">0</div>
-      <div class="s-fd" id="f-max">/15</div>
-    </div>
+
+  <!-- Dashboard view -->
+  <div id="dashboard">
+    <div class="d-week-title">Últimos 7 días</div>
+    <div id="dash-content"><div class="d-loading">···</div></div>
   </div>
 </div>
 
@@ -152,7 +196,9 @@ const WE=[
     {id:'r1',label:'Caminé o leí · sin pantallas'}]}
 ];
 const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DAYS_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MONTHS_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const SCORE_IDS=['b1','b2','b3','a1','a2','a3','a4','a5','g1','g2','m1','p1','p2','p3','r1'];
 const WE_SCORE_IDS=['b1','b2','b3','m1','g1','g2','c1','r1'];
 
@@ -210,15 +256,25 @@ async function loadDay(date){
 
 async function saveDay(){
   if(!GAS_URL) return;
+  const btn=document.getElementById('btn-save');
+  btn.textContent='···';
+  btn.classList.remove('saved');
   const date=toKey(currentDate);
   const payload=encodeURIComponent(JSON.stringify({checks:state.checks,log:state.log}));
   const url=`${GAS_URL}?action=save&date=${date}&payload=${payload}`;
-  try{ await jsonpCall(url); }catch{}
+  try{
+    await jsonpCall(url);
+    btn.textContent='Guardado';
+    btn.classList.add('saved');
+    setTimeout(()=>{ btn.textContent='Guardar'; btn.classList.remove('saved'); }, 2000);
+  }catch{
+    btn.textContent='Guardar';
+  }
 }
 
 function debouncedSave(){
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(saveDay, 800);
+  saveTimer=setTimeout(saveDay, 1500);
 }
 
 function getBlocks(dt){ return dt==='weekend'?WE:WD; }
@@ -310,6 +366,8 @@ async function gotoDate(d){
   currentDate=d;
   loading=true;
   document.getElementById('h-loading').style.display='inline';
+  document.getElementById('btn-save').textContent='Guardar';
+  document.getElementById('btn-save').classList.remove('saved');
   updateHeader();
   const data=await loadDay(toKey(d));
   state={checks:data.checks||{},log:data.log||''};
@@ -320,6 +378,81 @@ async function gotoDate(d){
   renderLog();
 }
 
+function showTab(tab){
+  document.getElementById('tab-day').classList.toggle('active', tab==='day');
+  document.getElementById('tab-dash').classList.toggle('active', tab==='dash');
+  document.getElementById('day-view').style.display = tab==='day' ? 'block' : 'none';
+  document.getElementById('dashboard').style.display = tab==='dash' ? 'block' : 'none';
+  if(tab==='dash') loadDashboard();
+}
+
+async function loadDashboard(){
+  document.getElementById('dash-content').innerHTML='<div class="d-loading">···</div>';
+  const today=new Date();
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(today);
+    d.setDate(d.getDate()-i);
+    days.push(d);
+  }
+  const results=await Promise.all(days.map(async d=>{
+    const data=await loadDay(toKey(d));
+    const dt=dayType(d);
+    const ids=getScoreIds(dt);
+    const score=ids.filter(id=>data.checks&&data.checks[id]).length;
+    const max=getMax(dt);
+    return {date:d,score,max,hasData:Object.keys(data.checks||{}).length>0};
+  }));
+
+  const totalScore=results.reduce((a,r)=>a+r.score,0);
+  const totalMax=results.reduce((a,r)=>a+r.max,0);
+  const pct=Math.round((totalScore/totalMax)*100);
+  const weekColor=scoreColor(totalScore,totalMax);
+
+  let html=results.map(r=>{
+    const isT=isToday(r.date);
+    const c=r.hasData?scoreColor(r.score,r.max):'var(--hint)';
+    const bc=r.hasData?barColor(r.score,r.max):'var(--border2)';
+    const barW=r.max>0?Math.round((r.score/r.max)*100):0;
+    return `
+    <div class="d-row">
+      <div class="d-day${isT?' today':''}">${DAYS_SHORT[r.date.getDay()]}</div>
+      <div class="d-right">
+        <div class="d-top">
+          <span class="d-date">${r.date.getDate()} ${MONTHS_SHORT[r.date.getMonth()]}</span>
+          ${r.hasData
+            ?`<span class="d-score" style="color:${c}">${r.score}<span style="font-size:12px;color:var(--hint)">/${r.max}</span></span>`
+            :`<span class="d-empty">—</span>`}
+        </div>
+        <div class="d-bar-wrap">
+          <div class="d-bar-fill" style="width:${barW}%;background:${bc}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  html+=`
+  <div class="d-summary">
+    <div class="d-sum-label">Score<br>semanal</div>
+    <div style="text-align:right">
+      <div class="d-sum-val" style="color:${weekColor}">${totalScore}</div>
+      <div class="d-sum-pct">${pct}% · ${totalScore}/${totalMax}</div>
+    </div>
+  </div>`;
+
+  document.getElementById('dash-content').innerHTML=html;
+}
+
+function initListeners(){
+  document.getElementById('btn-prev').addEventListener('click',()=>{
+    const d=new Date(currentDate);d.setDate(d.getDate()-1);gotoDate(d);
+  });
+  document.getElementById('btn-next').addEventListener('click',()=>{
+    const d=new Date(currentDate);d.setDate(d.getDate()+1);gotoDate(d);
+  });
+  document.getElementById('btn-save').addEventListener('click',saveDay);
+}
+
 function saveConfig(){
   const val=document.getElementById('gas-input').value.trim();
   if(!val) return;
@@ -327,6 +460,7 @@ function saveConfig(){
   localStorage.setItem('sov_gas_url',val);
   document.getElementById('setup').style.display='none';
   document.getElementById('app').style.display='block';
+  initListeners();
   gotoDate(new Date());
 }
 
@@ -336,14 +470,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     return;
   }
   document.getElementById('app').style.display='block';
-
-  document.getElementById('btn-prev').addEventListener('click',()=>{
-    const d=new Date(currentDate);d.setDate(d.getDate()-1);gotoDate(d);
-  });
-  document.getElementById('btn-next').addEventListener('click',()=>{
-    const d=new Date(currentDate);d.setDate(d.getDate()+1);gotoDate(d);
-  });
-
+  initListeners();
   gotoDate(new Date());
 });
 </script>
