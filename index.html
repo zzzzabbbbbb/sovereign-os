@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Sovereign OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>◆</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080808;--surface:#111;--surface2:#161616;
+  --border:#1e1e1e;--border2:#2a2a2a;
+  --text:#f0ece4;--muted:#666;--hint:#333;
+  --green:#4ade80;--green-bg:#0d2818;--green-border:#1a4a28;
+  --amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--blue-bg:#0d1f35;
+  --mono:'IBM Plex Mono',monospace;
+  --display:'Bebas Neue',sans-serif;
+  --radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh}
+#app{max-width:440px;margin:0 auto;padding-bottom:4rem}
+
+/* Setup screen */
+#setup{display:none;padding:2rem 1.25rem;text-align:center}
+#setup h1{font-family:var(--display);font-size:32px;letter-spacing:2px;margin-bottom:.75rem}
+#setup p{font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:1.5rem}
+#setup input{width:100%;background:var(--surface);border:.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;margin-bottom:.75rem}
+#setup input:focus{border-color:var(--muted)}
+#setup button{width:100%;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);padding:11px;font-family:var(--display);font-size:18px;letter-spacing:2px;cursor:pointer}
+
+/* Header */
+.s-top{padding:1.25rem 1.25rem .75rem;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:.5px solid var(--border)}
+.s-dn{font-family:var(--display);font-size:42px;line-height:1;letter-spacing:1px}
+.s-di{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.5px}
+.s-sc{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.s-sn{font-family:var(--display);font-size:56px;line-height:1;transition:color .3s}
+.s-sm{font-size:10px;color:var(--hint);text-align:right;letter-spacing:.5px}
+.s-bar{width:60px;height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
+.s-barf{height:100%;transition:width .4s ease,background .3s}
+
+/* Nav */
+.s-nav{display:flex;align-items:center;gap:8px;padding:.6rem 1.25rem;border-bottom:.5px solid var(--border)}
+.s-nb{background:none;border:.5px solid var(--border2);border-radius:7px;padding:5px 13px;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;transition:all .15s}
+.s-nb:hover{border-color:var(--muted);color:var(--text)}
+.s-nd{font-size:11px;color:var(--hint);flex:1;letter-spacing:1px}
+.s-tag{font-size:10px;padding:2px 8px;border-radius:6px;background:var(--green-bg);color:var(--green);border:.5px solid var(--green-border)}
+.s-loading{font-size:11px;color:var(--hint);letter-spacing:1px}
+
+/* Blocks */
+.s-blocks{padding:.75rem 1.25rem 0}
+.s-block{border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden;margin-bottom:.6rem}
+.s-bh{display:flex;align-items:baseline;justify-content:space-between;padding:.65rem 1rem .5rem;border-bottom:.5px solid var(--border)}
+.s-bt{font-family:var(--display);font-size:17px;letter-spacing:2px}
+.s-bt.clau{color:var(--blue)}
+.s-btime{font-size:10px;color:var(--hint)}
+.s-row{display:flex;align-items:center;gap:11px;padding:.55rem 1rem;border-bottom:.5px solid var(--border);cursor:pointer;transition:background .1s;user-select:none}
+.s-row:last-child{border-bottom:none}
+.s-row:active{background:var(--surface2)}
+.s-cb{width:17px;height:17px;border:.5px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px;color:transparent}
+.s-cb.on{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.s-rl{font-size:12px;color:var(--muted);transition:all .15s;flex:1;letter-spacing:.2px}
+.s-rl.on{color:var(--hint);text-decoration:line-through;text-decoration-color:var(--border2)}
+
+/* Café extra */
+.s-extra{border:.5px solid rgba(96,165,250,.2);border-radius:var(--radius);background:var(--blue-bg);overflow:hidden;margin-bottom:.6rem}
+.s-el{font-size:10px;color:var(--blue);padding:.5rem 1rem 0;letter-spacing:1px;opacity:.7}
+
+/* Log */
+.s-log{border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden;margin-bottom:.6rem}
+.s-lh{padding:.65rem 1rem .5rem;border-bottom:.5px solid var(--border);font-family:var(--display);font-size:17px;letter-spacing:2px;color:var(--hint)}
+.s-ta{width:100%;background:none;border:none;padding:.75rem 1rem;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;resize:none;outline:none;min-height:72px}
+.s-ta::placeholder{color:var(--border2)}
+.s-ta:focus{color:var(--text)}
+
+/* Footer score */
+.s-foot{padding:1.5rem 1.25rem 0;display:flex;align-items:flex-end;justify-content:space-between;border-top:.5px solid var(--border);margin:0 1.25rem}
+.s-fl{font-size:11px;color:var(--hint);letter-spacing:1px;line-height:1.8}
+.s-fn{font-family:var(--display);font-size:92px;line-height:.85;transition:color .3s}
+.s-fd{font-family:var(--display);font-size:34px;color:var(--hint);align-self:flex-end;padding-bottom:7px}
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h1>Sovereign OS</h1>
+  <p>Pega tu URL del GAS web app para conectar con Google Sheets.</p>
+  <input type="url" id="gas-input" placeholder="https://script.google.com/macros/s/...">
+  <button onclick="saveConfig()">Conectar</button>
+</div>
+
+<div id="app" style="display:none">
+  <div class="s-top">
+    <div>
+      <div class="s-dn" id="h-day">—</div>
+      <div class="s-di" id="h-date">—</div>
+    </div>
+    <div class="s-sc">
+      <div class="s-sn" id="h-score">0</div>
+      <div class="s-sm" id="h-max">/ 15</div>
+      <div class="s-bar"><div class="s-barf" id="h-bar"></div></div>
+    </div>
+  </div>
+  <div class="s-nav">
+    <button class="s-nb" id="btn-prev">←</button>
+    <span class="s-nd" id="h-type">—</span>
+    <span class="s-tag" id="h-today" style="display:none">Hoy</span>
+    <span class="s-loading" id="h-loading" style="display:none">···</span>
+    <button class="s-nb" id="btn-next">→</button>
+  </div>
+  <div class="s-blocks" id="blocks-container"></div>
+  <div style="padding:0 1.25rem">
+    <div class="s-log">
+      <div class="s-lh">Log</div>
+      <textarea class="s-ta" id="log-ta" placeholder="Registro técnico del día" rows="4"></textarea>
+    </div>
+  </div>
+  <div class="s-foot">
+    <div class="s-fl">Score<br>del día</div>
+    <div style="display:flex;align-items:flex-end;gap:4px">
+      <div class="s-fn" id="f-score">0</div>
+      <div class="s-fd" id="f-max">/15</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WD=[
+  {id:'launch',title:'Morning launch',time:'07:00–09:00',items:[
+    {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},{id:'b3',label:'Desayunado'}]},
+  {id:'work_am',title:'Work AM',time:'09:00–14:00',items:[
+    {id:'a1',label:'Pomo AM · 1'},{id:'a2',label:'Pomo AM · 2'},{id:'a3',label:'Pomo AM · 3'},
+    {id:'a4',label:'Pomo AM · 4'},{id:'a5',label:'Pomo AM · 5'}]},
+  {id:'anchor',title:'Anchor',time:'14:00–16:00',items:[
+    {id:'g1',label:'Gym'},{id:'g2',label:'Comida real'}]},
+  {id:'work_pm',title:'Work PM',time:'16:00–19:00',items:[
+    {id:'m1',label:'Meditación · 15 min'},{id:'p1',label:'Pomo PM · 1'},
+    {id:'p2',label:'Pomo PM · 2'},{id:'p3',label:'Pomo PM · 3'}]},
+  {id:'reset',title:'Reset',time:'19:00–21:00',items:[
+    {id:'r1',label:'Caminé o leí · sin pantallas'}]}
+];
+const WE=[
+  {id:'morning',title:'Morning',time:'07:00–10:00',items:[
+    {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},
+    {id:'b3',label:'Desayunado'},{id:'m1',label:'Meditación'}]},
+  {id:'cuerpo',title:'Cuerpo',time:'10:00–14:00',items:[
+    {id:'g1',label:'Gym'},{id:'g2',label:'Comida real'}]},
+  {id:'claudette',title:'Con Claudette',time:'Tarde',items:[
+    {id:'c1',label:'Salida o actividad juntos'}]},
+  {id:'reset',title:'Reset',time:'19:00–21:00',items:[
+    {id:'r1',label:'Caminé o leí · sin pantallas'}]}
+];
+const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const SCORE_IDS=['b1','b2','b3','a1','a2','a3','a4','a5','g1','g2','m1','p1','p2','p3','r1'];
+const WE_SCORE_IDS=['b1','b2','b3','m1','g1','g2','c1','r1'];
+
+let GAS_URL = localStorage.getItem('sov_gas_url') || '';
+let currentDate = new Date();
+let state = { checks:{}, log:'' };
+let saveTimer = null;
+let loading = false;
+
+function toKey(d){ return d.toISOString().split('T')[0] }
+function isToday(d){ return toKey(d)===toKey(new Date()) }
+function dayType(d){
+  const w=d.getDay();
+  if(w===0||w===6) return 'weekend';
+  if(w===2||w===4) return 'cafe';
+  return 'weekday';
+}
+function scoreColor(s,m){
+  const p=s/m;
+  if(p>=0.8) return 'var(--green)';
+  if(p>=0.5) return 'var(--amber)';
+  if(s===0)  return 'var(--hint)';
+  return 'var(--red)';
+}
+function barColor(s,m){
+  const p=s/m;
+  if(p>=0.8) return 'var(--green)';
+  if(p>=0.5) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function jsonpCall(url){
+  return new Promise((resolve,reject)=>{
+    const name='__sov'+Date.now();
+    const timer=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); },12000);
+    function cleanup(){
+      delete window[name];
+      if(s.parentNode) s.parentNode.removeChild(s);
+      clearTimeout(timer);
+    }
+    window[name]=function(data){ cleanup(); resolve(data); };
+    const s=document.createElement('script');
+    s.onerror=()=>{ cleanup(); reject(new Error('script error')); };
+    s.src=url+(url.includes('?')?'&':'?')+'callback='+name;
+    document.head.appendChild(s);
+  });
+}
+
+async function loadDay(date){
+  if(!GAS_URL) return {checks:{},log:''};
+  const url=`${GAS_URL}?action=get&date=${date}`;
+  try{ return await jsonpCall(url); }
+  catch{ return {checks:{},log:''}; }
+}
+
+async function saveDay(){
+  if(!GAS_URL) return;
+  const date=toKey(currentDate);
+  const payload=encodeURIComponent(JSON.stringify({checks:state.checks,log:state.log}));
+  const url=`${GAS_URL}?action=save&date=${date}&payload=${payload}`;
+  try{ await jsonpCall(url); }catch{}
+}
+
+function debouncedSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveDay, 800);
+}
+
+function getBlocks(dt){ return dt==='weekend'?WE:WD; }
+function getMax(dt){ return dt==='weekend'?8:15; }
+function getScoreIds(dt){ return dt==='weekend'?WE_SCORE_IDS:SCORE_IDS; }
+
+function calcScore(){
+  const dt=dayType(currentDate);
+  const ids=getScoreIds(dt);
+  return ids.filter(id=>state.checks[id]).length;
+}
+
+function updateHeader(){
+  const dt=dayType(currentDate);
+  const max=getMax(dt);
+  const score=calcScore();
+  const pct=max>0?(score/max)*100:0;
+  const c=scoreColor(score,max);
+  const bc=barColor(score,max);
+
+  document.getElementById('h-day').textContent=DAYS[currentDate.getDay()];
+  document.getElementById('h-date').textContent=
+    currentDate.getDate()+' · '+MONTHS[currentDate.getMonth()]+' · '+currentDate.getFullYear();
+  document.getElementById('h-score').textContent=score;
+  document.getElementById('h-score').style.color=c;
+  document.getElementById('h-max').textContent='/ '+max;
+  document.getElementById('h-bar').style.width=pct+'%';
+  document.getElementById('h-bar').style.background=bc;
+  document.getElementById('h-type').textContent=
+    dt==='weekend'?'Fin de semana':dt==='cafe'?'Día de café':'Día laboral';
+  document.getElementById('h-today').style.display=isToday(currentDate)?'inline':'none';
+  document.getElementById('f-score').textContent=score;
+  document.getElementById('f-score').style.color=c;
+  document.getElementById('f-max').textContent='/'+max;
+}
+
+function renderBlocks(){
+  const dt=dayType(currentDate);
+  const blocks=getBlocks(dt);
+  const isCafe=dt==='cafe';
+  const container=document.getElementById('blocks-container');
+
+  let html=blocks.map(block=>`
+    <div class="s-block">
+      <div class="s-bh">
+        <div class="s-bt${block.id==='claudette'?' clau':''}">${block.title}</div>
+        <div class="s-btime">${block.time}</div>
+      </div>
+      ${block.items.map(item=>`
+        <div class="s-row" data-id="${item.id}">
+          <div class="s-cb${state.checks[item.id]?' on':''}">✓</div>
+          <span class="s-rl${state.checks[item.id]?' on':''}">${item.label}</span>
+        </div>`).join('')}
+    </div>`).join('');
+
+  if(isCafe){
+    html+=`
+    <div class="s-extra">
+      <div class="s-el">Adicional · no suma al score</div>
+      <div class="s-row" data-id="cafe_ex" style="border-bottom:none">
+        <div class="s-cb${state.checks['cafe_ex']?' on':''}">✓</div>
+        <span class="s-rl${state.checks['cafe_ex']?' on':''}">Trabajé desde café</span>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML=html;
+  document.querySelectorAll('.s-row[data-id]').forEach(row=>{
+    row.addEventListener('click',()=>{
+      const id=row.dataset.id;
+      state.checks[id]=!state.checks[id];
+      updateHeader();
+      const cb=row.querySelector('.s-cb');
+      const rl=row.querySelector('.s-rl');
+      cb.classList.toggle('on',!!state.checks[id]);
+      rl.classList.toggle('on',!!state.checks[id]);
+      debouncedSave();
+    });
+  });
+}
+
+function renderLog(){
+  const ta=document.getElementById('log-ta');
+  ta.value=state.log||'';
+  ta.oninput=e=>{ state.log=e.target.value; debouncedSave(); };
+}
+
+async function gotoDate(d){
+  currentDate=d;
+  loading=true;
+  document.getElementById('h-loading').style.display='inline';
+  updateHeader();
+  const data=await loadDay(toKey(d));
+  state={checks:data.checks||{},log:data.log||''};
+  loading=false;
+  document.getElementById('h-loading').style.display='none';
+  updateHeader();
+  renderBlocks();
+  renderLog();
+}
+
+function saveConfig(){
+  const val=document.getElementById('gas-input').value.trim();
+  if(!val) return;
+  GAS_URL=val;
+  localStorage.setItem('sov_gas_url',val);
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='block';
+  gotoDate(new Date());
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  if(!GAS_URL){
+    document.getElementById('setup').style.display='block';
+    return;
+  }
+  document.getElementById('app').style.display='block';
+
+  document.getElementById('btn-prev').addEventListener('click',()=>{
+    const d=new Date(currentDate);d.setDate(d.getDate()-1);gotoDate(d);
+  });
+  document.getElementById('btn-next').addEventListener('click',()=>{
+    const d=new Date(currentDate);d.setDate(d.getDate()+1);gotoDate(d);
+  });
+
+  gotoDate(new Date());
+});
+</script>
+</body>
+</html>
