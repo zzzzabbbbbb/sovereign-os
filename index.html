@@ -113,6 +113,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .d-sum-label{font-size:10px;color:var(--hint);letter-spacing:1px;line-height:1.8}
 .d-sum-val{font-family:var(--display);font-size:48px;line-height:1;transition:color .3s}
 .d-sum-pct{font-size:10px;color:var(--muted);margin-top:3px;text-align:right}
+
+/* Heatmap */
+.d-heatmap{margin-top:1.5rem;padding-top:1rem;border-top:.5px solid var(--border)}
+.d-hm-title{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:.75rem}
+.d-hm-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.d-hm-label{font-size:9px;color:var(--hint);text-align:center;letter-spacing:.5px}
+.d-hm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.d-hm-cell{aspect-ratio:1;border-radius:3px;background:var(--border);cursor:pointer;transition:opacity .15s;position:relative}
+.d-hm-cell:hover{opacity:.75}
+.d-hm-cell.today{outline:1.5px solid var(--text);outline-offset:1px}
+.d-hm-cell.future{background:transparent;cursor:default}
+
+/* Weekly summary modal */
+.ws-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center;padding:1.5rem}
+.ws-overlay.show{display:flex}
+.ws-card{background:var(--surface);border:.5px solid var(--border2);border-radius:14px;padding:1.5rem;width:100%;max-width:360px}
+.ws-title{font-family:var(--display);font-size:26px;letter-spacing:2px;margin-bottom:.25rem}
+.ws-sub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:1.25rem}
+.ws-stat{display:flex;justify-content:space-between;align-items:baseline;padding:.5rem 0;border-bottom:.5px solid var(--border)}
+.ws-stat:last-of-type{border-bottom:none}
+.ws-stat-label{font-size:11px;color:var(--hint);letter-spacing:.5px}
+.ws-stat-val{font-family:var(--display);font-size:22px}
+.ws-btn{margin-top:1.25rem;width:100%;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);padding:10px;font-family:var(--display);font-size:16px;letter-spacing:2px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -180,7 +203,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
     </div>
     <div style="padding:.75rem 1.25rem 0">
       <div id="dash-content"><div class="d-loading">···</div></div>
+      <div class="d-heatmap">
+        <div class="d-hm-title">Últimos 35 días</div>
+        <div class="d-hm-labels" id="hm-labels"></div>
+        <div class="d-hm-grid" id="hm-grid"><div class="d-loading">···</div></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Weekly summary modal -->
+<div class="ws-overlay" id="ws-overlay">
+  <div class="ws-card">
+    <div class="ws-title">Semana cerrada</div>
+    <div class="ws-sub" id="ws-range">—</div>
+    <div class="ws-stat"><span class="ws-stat-label">Score total</span><span class="ws-stat-val" id="ws-score">—</span></div>
+    <div class="ws-stat"><span class="ws-stat-label">Mejor día</span><span class="ws-stat-val" id="ws-best">—</span></div>
+    <div class="ws-stat"><span class="ws-stat-label">Ítem más fallado</span><span class="ws-stat-val" id="ws-miss">—</span></div>
+    <button class="ws-btn" onclick="dismissWeeklySummary()">Entendido</button>
   </div>
 </div>
 
@@ -427,7 +467,7 @@ function showTab(tab){
   document.getElementById('tab-dash').classList.toggle('active', tab==='dash');
   document.getElementById('day-view').style.display = tab==='day' ? 'block' : 'none';
   document.getElementById('dashboard').style.display = tab==='dash' ? 'block' : 'none';
-  if(tab==='dash') loadDashboard();
+  if(tab==='dash'){ loadDashboard(); loadHeatmap(); }
 }
 
 async function loadDashboard(){
@@ -493,6 +533,131 @@ async function loadDashboard(){
   document.getElementById('dash-content').innerHTML = html;
 }
 
+async function loadHeatmap(){
+  const DAY_LABELS=['L','M','M','J','V','S','D'];
+  document.getElementById('hm-labels').innerHTML = DAY_LABELS.map(l=>`<div class="d-hm-label">${l}</div>`).join('');
+
+  const today = new Date();
+  // start from the Monday 5 weeks ago (35 cells)
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow===0?6:dow-1) - 28);
+  monday.setHours(0,0,0,0);
+
+  const days = Array.from({length:35}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    return d;
+  });
+
+  const results = await Promise.all(days.map(async d => {
+    const isFuture = d > today;
+    if(isFuture) return {date:d, pct:-1, isFuture:true};
+    const data = await loadDay(toKey(d));
+    const dt = dayType(d);
+    const ids = getScoreIds(dt);
+    const score = ids.filter(id => data.checks&&data.checks[id]).length;
+    const max = getMax(dt);
+    const hasData = Object.keys(data.checks||{}).length > 0;
+    return {date:d, pct: hasData ? score/max : -1, isFuture:false};
+  }));
+
+  function pctToColor(pct){
+    if(pct<0) return 'var(--border)';
+    if(pct>=0.8) return 'var(--green)';
+    if(pct>=0.5) return 'var(--amber)';
+    if(pct===0) return 'var(--hint)';
+    return 'var(--red)';
+  }
+
+  const grid = document.getElementById('hm-grid');
+  grid.innerHTML = results.map(r => {
+    const isT = isToday(r.date);
+    const bg = r.isFuture ? '' : `background:${pctToColor(r.pct)}`;
+    const title = `${r.date.getDate()} ${MONTHS_SHORT[r.date.getMonth()]}${r.pct>=0?' · '+Math.round(r.pct*100)+'%':''}`;
+    return `<div class="d-hm-cell${r.isFuture?' future':''}${isT?' today':''}" style="${bg}" title="${title}" data-key="${toKey(r.date)}"></div>`;
+  }).join('');
+
+  grid.querySelectorAll('.d-hm-cell:not(.future)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const [y,m,d] = cell.dataset.key.split('-').map(Number);
+      showTab('day');
+      gotoDate(new Date(y, m-1, d));
+    });
+  });
+}
+
+function isoWeek(d){
+  const tmp = new Date(d);
+  tmp.setHours(0,0,0,0);
+  tmp.setDate(tmp.getDate() + 4 - (tmp.getDay()||7));
+  const yearStart = new Date(tmp.getFullYear(),0,1);
+  return `${tmp.getFullYear()}-W${Math.ceil(((tmp-yearStart)/86400000+1)/7)}`;
+}
+
+async function checkWeeklySummary(){
+  const today = new Date();
+  if(today.getDay() !== 1) return; // only on Monday
+  const dow = today.getDay();
+  const lastMon = new Date(today);
+  lastMon.setDate(today.getDate() - 7);
+  const weekKey = 'sov_wseen_' + isoWeek(lastMon);
+  if(localStorage.getItem(weekKey)) return;
+
+  // load last week Mon–Sun
+  const days = Array.from({length:7}, (_,i) => {
+    const d = new Date(lastMon);
+    d.setDate(lastMon.getDate()+i);
+    return d;
+  });
+
+  const results = await Promise.all(days.map(async d => {
+    const data = await loadDay(toKey(d));
+    const dt = dayType(d);
+    const ids = getScoreIds(dt);
+    const score = ids.filter(id => data.checks&&data.checks[id]).length;
+    const max = getMax(dt);
+    const hasData = Object.keys(data.checks||{}).length > 0;
+    return {date:d, score, max, checks:data.checks||{}, hasData};
+  }));
+
+  const doneResults = results.filter(r => r.hasData);
+  if(!doneResults.length) return;
+
+  const totalScore = doneResults.reduce((a,r)=>a+r.score,0);
+  const totalMax   = doneResults.reduce((a,r)=>a+r.max,0);
+  const pct = Math.round((totalScore/totalMax)*100);
+
+  const bestDay = doneResults.reduce((a,b) => (b.score/b.max > a.score/a.max ? b : a));
+
+  // count misses per item across all scored days
+  const allIds = [...new Set(doneResults.flatMap(r => getScoreIds(dayType(r.date))))];
+  const misses = {};
+  allIds.forEach(id => { misses[id] = 0; });
+  doneResults.forEach(r => {
+    getScoreIds(dayType(r.date)).forEach(id => {
+      if(!r.checks[id]) misses[id]++;
+    });
+  });
+  const missedId = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const itemLabel = [...WD,...WE].flatMap(b=>b.items).find(i=>i.id===missedId)?.label || missedId;
+
+  const sun = new Date(lastMon); sun.setDate(lastMon.getDate()+6);
+  document.getElementById('ws-range').textContent =
+    `${lastMon.getDate()} ${MONTHS_SHORT[lastMon.getMonth()]} – ${sun.getDate()} ${MONTHS_SHORT[sun.getMonth()]}`;
+  document.getElementById('ws-score').textContent = `${totalScore} · ${pct}%`;
+  document.getElementById('ws-score').style.color = pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+  document.getElementById('ws-best').textContent = DAYS[bestDay.date.getDay()];
+  document.getElementById('ws-miss').textContent = itemLabel || '—';
+  document.getElementById('ws-overlay').classList.add('show');
+
+  localStorage.setItem(weekKey, '1');
+}
+
+function dismissWeeklySummary(){
+  document.getElementById('ws-overlay').classList.remove('show');
+}
+
 async function calcStreak(){
   const today = new Date();
   const days = [];
@@ -556,6 +721,7 @@ function saveConfig(){
   initListeners();
   gotoDate(new Date());
   calcStreak();
+  checkWeeklySummary();
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -567,6 +733,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   initListeners();
   gotoDate(new Date());
   calcStreak();
+  checkWeeklySummary();
 });
 </script>
 </body>
