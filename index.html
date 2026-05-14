@@ -256,6 +256,9 @@ const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
 const MONTHS_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const SCORE_IDS=['b1','b2','b3','a1','a2','a3','a4','a5','g1','g2','m1','p1','p2','p3','r1'];
 const WE_SCORE_IDS=['m1','b1','b2','b3','g1','r1'];
+const MENTE_IDS=['n1','n2','n3','n4','n5','n6','n7','n8','n9'];
+const MENTE_LABELS=['Sin doomscrolling al despertar','Evité sabotaje digital','Regulé impulsos','Evité anestesiarme','Sostuve incomodidad','Elegí presencia','Actué con coherencia','Me hice responsable de mi energía','Cerré el día con claridad'];
+const MENTE_WEIGHT = 5/9; // 9 ítems × 5/9 = 5pts → max total 20 (laboral) / 13 (finde)
 
 let GAS_URL = localStorage.getItem('sov_gas_url') || '';
 let currentDate = new Date();
@@ -337,13 +340,21 @@ function debouncedSave(){
 }
 
 function getBlocks(dt){ return dt==='weekend'?WE:WD; }
-function getMax(dt){ return dt==='weekend'?8:15; }
+function getMax(dt){ return dt==='weekend'?13:20; }
 function getScoreIds(dt){ return dt==='weekend'?WE_SCORE_IDS:SCORE_IDS; }
 
+function calcDayScore(checks, dt){
+  const phys = getScoreIds(dt).filter(id=>checks[id]).length;
+  const mente = MENTE_IDS.filter(id=>checks[id]).length * MENTE_WEIGHT;
+  return Math.round((phys + mente) * 10) / 10;
+}
+
 function calcScore(){
-  const dt=dayType(currentDate);
-  const ids=getScoreIds(dt);
-  return ids.filter(id=>state.checks[id]).length;
+  return calcDayScore(state.checks, dayType(currentDate));
+}
+
+function fmtScore(s){
+  return Number.isInteger(s) ? String(s) : s.toFixed(1);
 }
 
 function updateHeader(){
@@ -357,7 +368,7 @@ function updateHeader(){
   document.getElementById('h-day').textContent=DAYS[currentDate.getDay()];
   document.getElementById('h-date').textContent=
     currentDate.getDate()+' · '+MONTHS[currentDate.getMonth()]+' · '+currentDate.getFullYear();
-  document.getElementById('h-score').textContent=score;
+  document.getElementById('h-score').textContent=fmtScore(score);
   document.getElementById('h-score').style.color=c;
   document.getElementById('h-max').textContent='/ '+max;
   document.getElementById('h-bar').style.width=pct+'%';
@@ -365,7 +376,7 @@ function updateHeader(){
   document.getElementById('h-type').textContent=
     dt==='weekend'?'Fin de semana':dt==='cafe'?'Día de café':'Día laboral';
   document.getElementById('h-today').style.display=isToday(currentDate)?'inline':'none';
-  document.getElementById('f-score').textContent=score;
+  document.getElementById('f-score').textContent=fmtScore(score);
   document.getElementById('f-score').style.color=c;
   document.getElementById('f-max').textContent='/'+max;
 }
@@ -399,6 +410,20 @@ function renderBlocks(){
       </div>
     </div>`;
   }
+
+  // Bloque Mente — siempre al final, vale 0.5pt c/u
+  html+=`
+    <div class="s-block" style="border-color:rgba(251,191,36,.15);background:rgba(251,191,36,.03)">
+      <div class="s-bh" style="border-color:rgba(251,191,36,.12)">
+        <div class="s-bt" style="color:var(--amber)">Mente</div>
+        <div class="s-btime">Cierre · 0.5pt c/u</div>
+      </div>
+      ${MENTE_IDS.map((id,i)=>`
+        <div class="s-row" data-id="${id}">
+          <div class="s-cb${state.checks[id]?' on':''}">✓</div>
+          <span class="s-rl${state.checks[id]?' on':''}">${MENTE_LABELS[i]}</span>
+        </div>`).join('')}
+    </div>`;
 
   container.innerHTML=html;
   document.querySelectorAll('.s-row[data-id]').forEach(row=>{
@@ -481,10 +506,9 @@ async function loadDashboard(){
   const results = await Promise.all(days.map(async d => {
     const data = await loadDay(toKey(d));
     const dt = dayType(d);
-    const ids = getScoreIds(dt);
-    const score = ids.filter(id => data.checks && data.checks[id]).length;
     const max = getMax(dt);
     const isFuture = d > new Date();
+    const score = calcDayScore(data.checks||{}, dt);
     return {date:d, score, max, hasData: !isFuture && Object.keys(data.checks||{}).length > 0, isFuture};
   }));
 
@@ -555,9 +579,8 @@ async function loadHeatmap(){
     if(isFuture) return {date:d, pct:-1, isFuture:true};
     const data = await loadDay(toKey(d));
     const dt = dayType(d);
-    const ids = getScoreIds(dt);
-    const score = ids.filter(id => data.checks&&data.checks[id]).length;
     const max = getMax(dt);
+    const score = calcDayScore(data.checks||{}, dt);
     const hasData = Object.keys(data.checks||{}).length > 0;
     return {date:d, pct: hasData ? score/max : -1, isFuture:false};
   }));
@@ -614,9 +637,8 @@ async function checkWeeklySummary(){
   const results = await Promise.all(days.map(async d => {
     const data = await loadDay(toKey(d));
     const dt = dayType(d);
-    const ids = getScoreIds(dt);
-    const score = ids.filter(id => data.checks&&data.checks[id]).length;
     const max = getMax(dt);
+    const score = calcDayScore(data.checks||{}, dt);
     const hasData = Object.keys(data.checks||{}).length > 0;
     return {date:d, score, max, checks:data.checks||{}, hasData};
   }));
@@ -624,23 +646,23 @@ async function checkWeeklySummary(){
   const doneResults = results.filter(r => r.hasData);
   if(!doneResults.length) return;
 
-  const totalScore = doneResults.reduce((a,r)=>a+r.score,0);
+  const totalScore = Math.round(doneResults.reduce((a,r)=>a+r.score,0)*10)/10;
   const totalMax   = doneResults.reduce((a,r)=>a+r.max,0);
   const pct = Math.round((totalScore/totalMax)*100);
 
   const bestDay = doneResults.reduce((a,b) => (b.score/b.max > a.score/a.max ? b : a));
 
-  // count misses per item across all scored days
-  const allIds = [...new Set(doneResults.flatMap(r => getScoreIds(dayType(r.date))))];
+  const allIds = [...new Set(doneResults.flatMap(r => [...getScoreIds(dayType(r.date)), ...MENTE_IDS]))];
   const misses = {};
   allIds.forEach(id => { misses[id] = 0; });
   doneResults.forEach(r => {
-    getScoreIds(dayType(r.date)).forEach(id => {
+    [...getScoreIds(dayType(r.date)), ...MENTE_IDS].forEach(id => {
       if(!r.checks[id]) misses[id]++;
     });
   });
   const missedId = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0]?.[0];
-  const itemLabel = [...WD,...WE].flatMap(b=>b.items).find(i=>i.id===missedId)?.label || missedId;
+  const menteIdx = MENTE_IDS.indexOf(missedId);
+  const itemLabel = menteIdx>=0 ? MENTE_LABELS[menteIdx] : ([...WD,...WE].flatMap(b=>b.items).find(i=>i.id===missedId)?.label || missedId);
 
   const sun = new Date(lastMon); sun.setDate(lastMon.getDate()+6);
   document.getElementById('ws-range').textContent =
@@ -660,38 +682,38 @@ function dismissWeeklySummary(){
 
 function buildDayReport(){
   const dt = dayType(currentDate);
-  const ids = getScoreIds(dt);
-  const score = ids.filter(id => state.checks[id]).length;
+  const physIds = getScoreIds(dt);
+  const score = calcDayScore(state.checks, dt);
   const max = getMax(dt);
   const pct = Math.round((score/max)*100);
-  const allItems = [...WD,...WE].flatMap(b=>b.items);
-  const uniqueItems = allItems.filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
+  const allItems = [...WD,...WE].flatMap(b=>b.items).filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
 
-  const done   = ids.filter(id=>state.checks[id]).map(id=>uniqueItems.find(i=>i.id===id)?.label||id);
-  const missed = ids.filter(id=>!state.checks[id]).map(id=>uniqueItems.find(i=>i.id===id)?.label||id);
+  const physDone   = physIds.filter(id=>state.checks[id]).map(id=>allItems.find(i=>i.id===id)?.label||id);
+  const physMissed = physIds.filter(id=>!state.checks[id]).map(id=>allItems.find(i=>i.id===id)?.label||id);
+  const menteDone   = MENTE_IDS.filter(id=>state.checks[id]).map(id=>MENTE_LABELS[MENTE_IDS.indexOf(id)]);
+  const menteMissed = MENTE_IDS.filter(id=>!state.checks[id]).map(id=>MENTE_LABELS[MENTE_IDS.indexOf(id)]);
 
   const streakEl = document.getElementById('h-streak-n');
   const streak = document.getElementById('h-streak').style.display!=='none' ? streakEl.textContent : '0';
-
-  const typeLabel = dt==='weekend'?'Fin de semana':dt==='cafe'?'Día de café (trabajo desde café)':'Día laboral';
+  const typeLabel = dt==='weekend'?'Fin de semana':dt==='cafe'?'Día de café':'Día laboral';
 
   let txt = `SOVEREIGN OS — REPORTE DIARIO\n`;
   txt += `==============================\n`;
   txt += `Fecha: ${DAYS[currentDate.getDay()]} ${currentDate.getDate()} ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}\n`;
   txt += `Tipo: ${typeLabel}\n`;
-  txt += `Score: ${score}/${max} (${pct}%)\n`;
+  txt += `Score: ${fmtScore(score)}/${max} (${pct}%)\n`;
   txt += `Racha actual: ${streak} días consecutivos ≥80%\n\n`;
 
-  txt += `COMPLETADO ✓\n`;
-  txt += done.length ? done.map(l=>`- ${l}`).join('\n') : '- (ninguno)';
-  txt += `\n\nNO COMPLETADO ✗\n`;
-  txt += missed.length ? missed.map(l=>`- ${l}`).join('\n') : '- (todo completado)';
+  txt += `EJECUCIÓN FÍSICA ✓\n`;
+  txt += physDone.length ? physDone.map(l=>`- ${l}`).join('\n') : '- (ninguno)';
+  if(physMissed.length){ txt += `\n\nEJECUCIÓN FÍSICA ✗\n`+physMissed.map(l=>`- ${l}`).join('\n'); }
+
+  txt += `\n\nBLOQUE MENTE ✓\n`;
+  txt += menteDone.length ? menteDone.map(l=>`- ${l}`).join('\n') : '- (ninguno)';
+  if(menteMissed.length){ txt += `\n\nBLOQUE MENTE ✗\n`+menteMissed.map(l=>`- ${l}`).join('\n'); }
 
   if(state.checks['cafe_ex']) txt += `\n\nNOTA: Trabajó desde café hoy`;
-
-  if(state.log?.trim()){
-    txt += `\n\nLOG DEL DÍA:\n${state.log.trim()}`;
-  }
+  if(state.log?.trim()) txt += `\n\nLOG DEL DÍA:\n${state.log.trim()}`;
 
   txt += `\n\n---\nUsa este reporte para detectar patrones, sugerir ajustes y dar feedback accionable.`;
   return txt;
@@ -702,15 +724,14 @@ async function buildWeekReport(){
   const results = await Promise.all(days.map(async d=>{
     const data = await loadDay(toKey(d));
     const dt = dayType(d);
-    const ids = getScoreIds(dt);
-    const score = ids.filter(id=>data.checks&&data.checks[id]).length;
     const max = getMax(dt);
+    const score = calcDayScore(data.checks||{}, dt);
     const hasData = Object.keys(data.checks||{}).length>0;
     return {date:d,score,max,hasData,checks:data.checks||{},log:data.log||''};
   }));
 
   const done = results.filter(r=>r.hasData);
-  const totalScore = done.reduce((a,r)=>a+r.score,0);
+  const totalScore = Math.round(done.reduce((a,r)=>a+r.score,0)*10)/10;
   const totalMax   = done.reduce((a,r)=>a+r.max,0);
   const pct = totalMax>0?Math.round((totalScore/totalMax)*100):0;
 
@@ -718,12 +739,13 @@ async function buildWeekReport(){
 
   const misses = {};
   done.forEach(r=>{
-    getScoreIds(dayType(r.date)).forEach(id=>{
+    [...getScoreIds(dayType(r.date)),...MENTE_IDS].forEach(id=>{
       misses[id]=(misses[id]||0)+(r.checks[id]?0:1);
     });
   });
   const topMiss = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0];
-  const topMissLabel = topMiss ? (allItems.find(i=>i.id===topMiss[0])?.label||topMiss[0]) : '—';
+  const menteIdx = topMiss ? MENTE_IDS.indexOf(topMiss[0]) : -1;
+  const topMissLabel = topMiss ? (menteIdx>=0 ? MENTE_LABELS[menteIdx] : (allItems.find(i=>i.id===topMiss[0])?.label||topMiss[0])) : '—';
 
   const sun = days[6];
   let txt = `SOVEREIGN OS — REPORTE SEMANAL\n`;
@@ -777,9 +799,8 @@ async function calcStreak(){
   const results = await Promise.all(days.map(async d => {
     const data = await loadDay(toKey(d));
     const dt = dayType(d);
-    const ids = getScoreIds(dt);
-    const score = ids.filter(id => data.checks && data.checks[id]).length;
     const max = getMax(dt);
+    const score = calcDayScore(data.checks||{}, dt);
     const hasData = Object.keys(data.checks||{}).length > 0;
     return { pct: hasData ? score/max : -1 };
   }));
