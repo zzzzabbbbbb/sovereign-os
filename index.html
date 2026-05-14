@@ -7,6 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>◆</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sovereign">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23080808'/><text y='.9em' font-size='80'>◆</text></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -39,6 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .s-sm{font-size:10px;color:var(--hint);text-align:right;letter-spacing:.5px}
 .s-bar{width:60px;height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
 .s-barf{height:100%;transition:width .4s ease,background .3s}
+.s-streak{font-size:11px;color:var(--amber);letter-spacing:.5px;margin-top:4px}
 
 /* Tabs */
 .s-tabs{display:flex;border-bottom:.5px solid var(--border)}
@@ -123,6 +129,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
     <div>
       <div class="s-dn" id="h-day">—</div>
       <div class="s-di" id="h-date">—</div>
+      <div class="s-streak" id="h-streak" style="display:none">▲ <span id="h-streak-n">0</span> días</div>
     </div>
     <div class="s-sc">
       <div class="s-sn" id="h-score">0</div>
@@ -483,6 +490,43 @@ async function loadDashboard(){
   document.getElementById('dash-content').innerHTML = html;
 }
 
+async function calcStreak(){
+  const today = new Date();
+  const days = [];
+  for(let i=0; i<30; i++){
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d);
+  }
+  const results = await Promise.all(days.map(async d => {
+    const data = await loadDay(toKey(d));
+    const dt = dayType(d);
+    const ids = getScoreIds(dt);
+    const score = ids.filter(id => data.checks && data.checks[id]).length;
+    const max = getMax(dt);
+    const hasData = Object.keys(data.checks||{}).length > 0;
+    return { pct: hasData ? score/max : -1 };
+  }));
+
+  // if today has no data yet, start counting from yesterday
+  let start = 0;
+  if(results[0].pct < 0) start = 1;
+
+  let streak = 0;
+  for(let i = start; i < results.length; i++){
+    if(results[i].pct >= 0.8) streak++;
+    else break;
+  }
+
+  const el = document.getElementById('h-streak');
+  if(streak > 0){
+    document.getElementById('h-streak-n').textContent = streak === 30 ? '30+' : streak;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 function initListeners(){
   document.getElementById('btn-prev').addEventListener('click',()=>{
     const d=new Date(currentDate);d.setDate(d.getDate()-1);gotoDate(d);
@@ -508,6 +552,7 @@ function saveConfig(){
   document.getElementById('app').style.display='block';
   initListeners();
   gotoDate(new Date());
+  calcStreak();
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -518,6 +563,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('app').style.display='block';
   initListeners();
   gotoDate(new Date());
+  calcStreak();
 });
 </script>
 </body>
