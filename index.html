@@ -174,6 +174,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
       <span class="s-tag" id="h-today" style="display:none">Hoy</span>
       <span class="s-loading" id="h-loading" style="display:none">···</span>
       <button class="s-save-btn" id="btn-save">Guardar</button>
+      <button class="s-save-btn" id="btn-copy-day" title="Copiar reporte para IA">IA</button>
       <button class="s-nb" id="btn-next">→</button>
     </div>
     <div class="s-blocks" id="blocks-container"></div>
@@ -199,6 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
       <span class="s-nd" id="dash-range">—</span>
       <span class="s-tag" id="dash-cur" style="display:none">Esta semana</span>
       <span class="s-loading" id="dash-loading" style="display:none">···</span>
+      <button class="s-save-btn" id="btn-copy-week" title="Copiar reporte semanal para IA">IA</button>
       <button class="s-nb" id="dash-next">→</button>
     </div>
     <div style="padding:.75rem 1.25rem 0">
@@ -241,13 +243,11 @@ const WD=[
 ];
 const WE=[
   {id:'morning',title:'Morning',time:'07:00–10:00',items:[
-    {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},
-    {id:'b3',label:'Desayunado'},{id:'m1',label:'Meditación'}]},
-  {id:'cuerpo',title:'Cuerpo',time:'10:00–14:00',items:[
-    {id:'g1',label:'Gym'},{id:'g2',label:'Comida real'}]},
-  {id:'claudette',title:'Con Claudette',time:'Tarde',items:[
-    {id:'c1',label:'Salida o actividad juntos'}]},
-  {id:'reset',title:'Reset',time:'19:00–21:00',items:[
+    {id:'m1',label:'Desperté antes de las 9'},
+    {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},{id:'b3',label:'Desayunado'}]},
+  {id:'cuerpo',title:'Cuerpo',time:'Mañana',items:[
+    {id:'g1',label:'Gym'}]},
+  {id:'reset',title:'Reset',time:'Noche',items:[
     {id:'r1',label:'Caminé o leí · sin pantallas'}]}
 ];
 const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -255,7 +255,7 @@ const DAYS_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MONTHS_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const SCORE_IDS=['b1','b2','b3','a1','a2','a3','a4','a5','g1','g2','m1','p1','p2','p3','r1'];
-const WE_SCORE_IDS=['b1','b2','b3','m1','g1','g2','c1','r1'];
+const WE_SCORE_IDS=['m1','b1','b2','b3','g1','r1'];
 
 let GAS_URL = localStorage.getItem('sov_gas_url') || '';
 let currentDate = new Date();
@@ -658,6 +658,114 @@ function dismissWeeklySummary(){
   document.getElementById('ws-overlay').classList.remove('show');
 }
 
+function buildDayReport(){
+  const dt = dayType(currentDate);
+  const ids = getScoreIds(dt);
+  const score = ids.filter(id => state.checks[id]).length;
+  const max = getMax(dt);
+  const pct = Math.round((score/max)*100);
+  const allItems = [...WD,...WE].flatMap(b=>b.items);
+  const uniqueItems = allItems.filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
+
+  const done   = ids.filter(id=>state.checks[id]).map(id=>uniqueItems.find(i=>i.id===id)?.label||id);
+  const missed = ids.filter(id=>!state.checks[id]).map(id=>uniqueItems.find(i=>i.id===id)?.label||id);
+
+  const streakEl = document.getElementById('h-streak-n');
+  const streak = document.getElementById('h-streak').style.display!=='none' ? streakEl.textContent : '0';
+
+  const typeLabel = dt==='weekend'?'Fin de semana':dt==='cafe'?'Día de café (trabajo desde café)':'Día laboral';
+
+  let txt = `SOVEREIGN OS — REPORTE DIARIO\n`;
+  txt += `==============================\n`;
+  txt += `Fecha: ${DAYS[currentDate.getDay()]} ${currentDate.getDate()} ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}\n`;
+  txt += `Tipo: ${typeLabel}\n`;
+  txt += `Score: ${score}/${max} (${pct}%)\n`;
+  txt += `Racha actual: ${streak} días consecutivos ≥80%\n\n`;
+
+  txt += `COMPLETADO ✓\n`;
+  txt += done.length ? done.map(l=>`- ${l}`).join('\n') : '- (ninguno)';
+  txt += `\n\nNO COMPLETADO ✗\n`;
+  txt += missed.length ? missed.map(l=>`- ${l}`).join('\n') : '- (todo completado)';
+
+  if(state.checks['cafe_ex']) txt += `\n\nNOTA: Trabajó desde café hoy`;
+
+  if(state.log?.trim()){
+    txt += `\n\nLOG DEL DÍA:\n${state.log.trim()}`;
+  }
+
+  txt += `\n\n---\nUsa este reporte para detectar patrones, sugerir ajustes y dar feedback accionable.`;
+  return txt;
+}
+
+async function buildWeekReport(){
+  const days = getWeekDays(weekOffset);
+  const results = await Promise.all(days.map(async d=>{
+    const data = await loadDay(toKey(d));
+    const dt = dayType(d);
+    const ids = getScoreIds(dt);
+    const score = ids.filter(id=>data.checks&&data.checks[id]).length;
+    const max = getMax(dt);
+    const hasData = Object.keys(data.checks||{}).length>0;
+    return {date:d,score,max,hasData,checks:data.checks||{},log:data.log||''};
+  }));
+
+  const done = results.filter(r=>r.hasData);
+  const totalScore = done.reduce((a,r)=>a+r.score,0);
+  const totalMax   = done.reduce((a,r)=>a+r.max,0);
+  const pct = totalMax>0?Math.round((totalScore/totalMax)*100):0;
+
+  const allItems = [...WD,...WE].flatMap(b=>b.items).filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
+
+  const misses = {};
+  done.forEach(r=>{
+    getScoreIds(dayType(r.date)).forEach(id=>{
+      misses[id]=(misses[id]||0)+(r.checks[id]?0:1);
+    });
+  });
+  const topMiss = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0];
+  const topMissLabel = topMiss ? (allItems.find(i=>i.id===topMiss[0])?.label||topMiss[0]) : '—';
+
+  const sun = days[6];
+  let txt = `SOVEREIGN OS — REPORTE SEMANAL\n`;
+  txt += `===============================\n`;
+  txt += `Semana: ${days[0].getDate()} ${MONTHS_SHORT[days[0].getMonth()]} – ${sun.getDate()} ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}\n`;
+  txt += `Score total: ${totalScore}/${totalMax} (${pct}%)\n\n`;
+
+  txt += `DÍA A DÍA:\n`;
+  results.forEach(r=>{
+    const p = r.hasData?Math.round((r.score/r.max)*100):null;
+    const tag = p===null?'sin datos':p>=80?'✓':p>=50?'~':'✗';
+    const label = r.hasData?`${r.score}/${r.max} (${p}%) ${tag}`:'—';
+    txt += `${DAYS_SHORT[r.date.getDay()]} ${r.date.getDate()} ${MONTHS_SHORT[r.date.getMonth()]}: ${label}\n`;
+  });
+
+  txt += `\nÍTEM MÁS FALLADO: ${topMissLabel}`;
+  if(topMiss) txt += ` (${topMiss[1]}/${done.length} días)`;
+
+  const logs = results.filter(r=>r.log?.trim());
+  if(logs.length){
+    txt += `\n\nLOGS DE LA SEMANA:\n`;
+    logs.forEach(r=>{
+      txt += `\n[${DAYS_SHORT[r.date.getDay()]} ${r.date.getDate()}]\n${r.log.trim()}\n`;
+    });
+  }
+
+  txt += `\n---\nUsa este reporte para detectar patrones, sugerir ajustes y dar feedback accionable.`;
+  return txt;
+}
+
+async function copyToClipboard(text, btn){
+  try{
+    await navigator.clipboard.writeText(text);
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('saved');
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('saved'); }, 2000);
+  }catch{
+    prompt('Copia este reporte:', text);
+  }
+}
+
 async function calcStreak(){
   const today = new Date();
   const days = [];
@@ -703,6 +811,14 @@ function initListeners(){
     const d=new Date(currentDate);d.setDate(d.getDate()+1);gotoDate(d);
   });
   document.getElementById('btn-save').addEventListener('click',saveDay);
+  document.getElementById('btn-copy-day').addEventListener('click',function(){
+    copyToClipboard(buildDayReport(), this);
+  });
+  document.getElementById('btn-copy-week').addEventListener('click',async function(){
+    const btn=this; btn.textContent='···';
+    const txt=await buildWeekReport();
+    copyToClipboard(txt, btn);
+  });
   document.getElementById('dash-prev').addEventListener('click',()=>{
     weekOffset--;loadDashboard();
   });
