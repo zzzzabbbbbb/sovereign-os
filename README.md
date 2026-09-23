@@ -113,7 +113,6 @@ Columnas en el orden en que las escribe `Code.gs`. Las de v2 van **al final**, a
 | `focus_am`, `focus_pm` | string | *v2* · En qué trabajó en cada bloque |
 | `units` | number | *v2* · Avance del día |
 
-
 ---
 
 ## Setup
