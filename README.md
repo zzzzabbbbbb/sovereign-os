@@ -113,8 +113,6 @@ Columnas en el orden en que las escribe `Code.gs`. Las de v2 van **al final**, a
 | `focus_am`, `focus_pm` | string | *v2* · En qué trabajó en cada bloque |
 | `units` | number | *v2* · Avance del día |
 
-> `Code.gs` vive en el proyecto de Apps Script vinculado al Sheet (Extensiones → Apps Script), no en este repo, porque lleva el ID del Sheet en la línea 1. Después de editarlo: Deploy → Manage deployments → Edit → New version → Deploy (la URL no cambia).
-
 ---
 
 ## Setup
@@ -122,14 +120,14 @@ Columnas en el orden en que las escribe `Code.gs`. Las de v2 van **al final**, a
 ### 1. Google Apps Script
 
 1. Crea un Google Sheet en [sheets.google.com](https://sheets.google.com)
-2. Copia el ID de la URL: `https://docs.google.com/spreadsheets/d/ESTE_ID/edit`
-3. **Extensiones → Apps Script** → borra el código default → pega `Code.gs`
-4. Reemplaza la línea 1: `const SS_ID = 'tu_id_aqui';`
-5. Guarda (`Cmd+S`) y nómbralo `Sovereign OS`
-6. **Deploy → New deployment → engranaje → Web app**
+2. En el Sheet: **Extensiones → Apps Script** → borra el código default → pega [`Code.gs`](Code.gs)
+3. Guarda (`Cmd+S`) y nómbralo `Sovereign OS`
+4. **Deploy → New deployment → engranaje → Web app**
    - Execute as: **Me**
    - Who has access: **Anyone**
-7. Autoriza los permisos y copia la URL (`https://script.google.com/macros/s/.../exec`)
+5. Autoriza los permisos y copia la URL (`https://script.google.com/macros/s/.../exec`)
+
+El ID del Sheet no va en el código. Si el script está vinculado al Sheet (paso 2) no hace falta nada. Si es un proyecto de Apps Script independiente: **Project Settings → Script Properties → `SS_ID`** = el ID de la URL del Sheet (`https://docs.google.com/spreadsheets/d/ESTE_ID/edit`).
 
 > Si modificas `Code.gs` después: Deploy → Manage deployments → Edit → New version → Deploy.
 
@@ -186,8 +184,7 @@ python3 -m http.server
 ```
 sovereign-os/
 ├── index.html      # App completa (UI + lógica)
+├── Code.gs         # Google Apps Script (backend) · copia versionada, se pega en Apps Script
 ├── manifest.json   # PWA
 └── icon*.png       # Íconos
-
-Code.gs (backend) vive en el proyecto de Apps Script, no en el repo.
 ```
