@@ -92,22 +92,28 @@ payload = { checks: {id: bool}, log, focus_am, focus_pm, units, score }
 
 ### Schema de la hoja `Log`
 
+Columnas en el orden en que las escribe `Code.gs`. Las de v2 van **al final**, así las columnas existentes no se mueven. Si la hoja es de la versión anterior, `Code.gs` agrega los encabezados nuevos solo la primera vez que se usa.
+
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | `date` | string `yyyy-MM-dd` | Fecha del registro |
-| `w1`, `m1`, `b1–b3` | boolean | Morning launch |
-| `a1–a5`, `p1–p3` | boolean | Pomos AM / PM |
+| `b1–b3` | boolean | Bañado, vestido, desayunado |
+| `a1–a5` | boolean | Pomos AM |
 | `g1–g2` | boolean | Gym, comida real |
-| `x1` | boolean | Sin Play en horas de trabajo |
-| `r1`, `s1` | boolean | Reset (caminar/leer, dormir a mi hora) |
+| `m1` | boolean | Meditación (entre semana) |
+| `p1–p3` | boolean | Pomos PM |
+| `r1` | boolean | Caminé o leí · sin pantallas |
 | `n1–n9` | boolean | Bloque Mente |
 | `cafe_ex` | boolean | Trabajó desde café (no cuenta en score) |
 | `log` | string | Registro libre del día |
-| `focus_am`, `focus_pm` | string | En qué trabajó en cada bloque |
-| `units` | number | Avance del día |
-| `score` | number | Score del día (con decimales por Mente) |
+| `score` | number | Score del día (con decimales por Mente, lo calcula el frontend) |
+| `w1` | boolean | *v2* · Desperté a tiempo |
+| `x1` | boolean | *v2* · Sin Play en horas de trabajo |
+| `s1` | boolean | *v2* · Dormí a mi hora |
+| `focus_am`, `focus_pm` | string | *v2* · En qué trabajó en cada bloque |
+| `units` | number | *v2* · Avance del día |
 
-> `Code.gs` vive en el proyecto de Apps Script vinculado al Sheet (Extensiones → Apps Script), no en este repo. Guarda columnas fijas (`CHECK_IDS`), así que necesita `w1`, `x1`, `s1`, `focus_am`, `focus_pm` y `units` para que persistan. Después de editarlo: Deploy → Manage deployments → Edit → New version → Deploy.
+> `Code.gs` vive en el proyecto de Apps Script vinculado al Sheet (Extensiones → Apps Script), no en este repo, porque lleva el ID del Sheet en la línea 1. Después de editarlo: Deploy → Manage deployments → Edit → New version → Deploy (la URL no cambia).
 
 ---
 
