@@ -77,6 +77,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .s-rl{font-size:12px;color:var(--muted);transition:all .15s;flex:1;letter-spacing:.2px}
 .s-rl.on{color:var(--hint);text-decoration:line-through;text-decoration-color:var(--border2)}
 
+/* Nunca dos seguidos */
+.s-miss{font-size:9px;color:var(--amber);letter-spacing:.5px;opacity:.75;white-space:nowrap;flex-shrink:0}
+
+/* Foco + avance */
+.s-fi{width:100%;background:none;border:none;border-top:.5px solid var(--border);padding:.6rem 1rem;font-family:var(--mono);font-size:12px;color:var(--muted);outline:none;border-radius:0}
+.s-fi::placeholder{color:var(--border2)}
+.s-fi:focus{color:var(--text)}
+.s-units{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;border-top:.5px solid var(--border)}
+.s-ul{flex:1;font-size:12px;color:var(--muted);letter-spacing:.2px}
+.s-us{display:block;font-size:10px;color:var(--hint);margin-top:2px}
+.s-ub{background:none;border:.5px solid var(--border2);border-radius:7px;width:32px;height:28px;cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:15px;line-height:1;transition:all .15s}
+.s-ub:hover{border-color:var(--muted);color:var(--text)}
+.s-ub:disabled{opacity:.3;cursor:default}
+.s-uv{font-family:var(--display);font-size:24px;min-width:28px;text-align:center;line-height:1}
+
 /* Café extra */
 .s-extra{border:.5px solid rgba(96,165,250,.2);border-radius:var(--radius);background:var(--blue-bg);overflow:hidden;margin-bottom:.6rem}
 .s-el{font-size:10px;color:var(--blue);padding:.5rem 1rem 0;letter-spacing:1px;opacity:.7}
@@ -114,6 +129,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .d-sum-val{font-family:var(--display);font-size:48px;line-height:1;transition:color .3s}
 .d-sum-pct{font-size:10px;color:var(--muted);margin-top:3px;text-align:right}
 
+.d-stats{display:flex;gap:.6rem;margin-top:.6rem}
+.d-stat{flex:1;padding:.75rem 1rem;border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.d-stat.tap{cursor:pointer}
+.d-stat-val{font-family:var(--display);font-size:32px;line-height:1;margin-top:4px}
+.d-stat-val small{font-size:16px;color:var(--hint)}
+.d-focus{margin-top:1rem}
+.d-focus-row{display:flex;gap:10px;padding:.4rem 0;border-bottom:.5px solid var(--border);font-size:11px;line-height:1.5}
+.d-focus-row:last-child{border-bottom:none}
+.d-focus-day{color:var(--hint);width:52px;flex-shrink:0;letter-spacing:.5px}
+.d-focus-txt{color:var(--muted);flex:1;word-break:break-word}
+
 /* Heatmap */
 .d-heatmap{margin-top:1.5rem;padding-top:1rem;border-top:.5px solid var(--border)}
 .d-hm-title{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:.75rem}
@@ -135,6 +161,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 .ws-stat:last-of-type{border-bottom:none}
 .ws-stat-label{font-size:11px;color:var(--hint);letter-spacing:.5px}
 .ws-stat-val{font-family:var(--display);font-size:22px}
+.ws-list{font-size:11px;color:var(--amber);line-height:1.7;padding:.25rem 0 .5rem;letter-spacing:.3px}
 .ws-btn{margin-top:1.25rem;width:100%;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);padding:10px;font-family:var(--display);font-size:16px;letter-spacing:2px;cursor:pointer}
 </style>
 </head>
@@ -156,7 +183,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
     </div>
     <div class="s-sc">
       <div class="s-sn" id="h-score">0</div>
-      <div class="s-sm" id="h-max">/ 15</div>
+      <div class="s-sm" id="h-max">/ 23</div>
       <div class="s-bar"><div class="s-barf" id="h-bar"></div></div>
     </div>
   </div>
@@ -188,7 +215,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
       <div class="s-fl">Score<br>del día</div>
       <div style="display:flex;align-items:flex-end;gap:4px">
         <div class="s-fn" id="f-score">0</div>
-        <div class="s-fd" id="f-max">/15</div>
+        <div class="s-fd" id="f-max">/23</div>
       </div>
     </div>
   </div>
@@ -222,6 +249,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
     <div class="ws-stat"><span class="ws-stat-label">Score total</span><span class="ws-stat-val" id="ws-score">—</span></div>
     <div class="ws-stat"><span class="ws-stat-label">Mejor día</span><span class="ws-stat-val" id="ws-best">—</span></div>
     <div class="ws-stat"><span class="ws-stat-label">Ítem más fallado</span><span class="ws-stat-val" id="ws-miss">—</span></div>
+    <div class="ws-stat"><span class="ws-stat-label">Fallados dos seguidos</span><span class="ws-stat-val" id="ws-twice-n">—</span></div>
+    <div class="ws-list" id="ws-twice"></div>
     <button class="ws-btn" onclick="dismissWeeklySummary()">Entendido</button>
   </div>
 </div>
@@ -229,53 +258,66 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:1
 <script>
 const WD=[
   {id:'launch',title:'Morning launch',time:'07:00–09:00',items:[
+    {id:'w1',label:'Desperté a las 7'},{id:'m1',label:'Meditación · 15 min'},
     {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},{id:'b3',label:'Desayunado'}]},
-  {id:'work_am',title:'Work AM',time:'09:00–14:00',items:[
+  {id:'work_am',title:'Work AM',time:'09:00–14:00',focus:'focus_am',items:[
     {id:'a1',label:'Pomo AM · 1'},{id:'a2',label:'Pomo AM · 2'},{id:'a3',label:'Pomo AM · 3'},
     {id:'a4',label:'Pomo AM · 4'},{id:'a5',label:'Pomo AM · 5'}]},
   {id:'anchor',title:'Anchor',time:'14:00–16:00',items:[
     {id:'g1',label:'Gym'},{id:'g2',label:'Comida real'}]},
-  {id:'work_pm',title:'Work PM',time:'16:00–19:00',items:[
-    {id:'m1',label:'Meditación · 15 min'},{id:'p1',label:'Pomo PM · 1'},
-    {id:'p2',label:'Pomo PM · 2'},{id:'p3',label:'Pomo PM · 3'}]},
+  {id:'work_pm',title:'Work PM',time:'16:00–19:00',focus:'focus_pm',units:true,items:[
+    {id:'p1',label:'Pomo PM · 1'},{id:'p2',label:'Pomo PM · 2'},{id:'p3',label:'Pomo PM · 3'},
+    {id:'x1',label:'Sin Play en horas de trabajo'}]},
   {id:'reset',title:'Reset',time:'19:00–21:00',items:[
-    {id:'r1',label:'Caminé o leí · sin pantallas'}]}
+    {id:'r1',label:'Caminé o leí · sin pantallas'},{id:'s1',label:'Dormí a mi hora'}]}
 ];
 const WE=[
   {id:'morning',title:'Morning',time:'07:00–10:00',items:[
-    {id:'m1',label:'Desperté antes de las 9'},
+    {id:'w1',label:'Desperté antes de las 9'},
     {id:'b1',label:'Bañado'},{id:'b2',label:'Vestido'},{id:'b3',label:'Desayunado'}]},
   {id:'cuerpo',title:'Cuerpo',time:'Mañana',items:[
     {id:'g1',label:'Gym'}]},
   {id:'reset',title:'Reset',time:'Noche',items:[
-    {id:'r1',label:'Caminé o leí · sin pantallas'}]}
+    {id:'r1',label:'Caminé o leí · sin pantallas'},{id:'s1',label:'Dormí a mi hora'}]}
 ];
 const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const DAYS_SHORT=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MONTHS_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const SCORE_IDS=['b1','b2','b3','a1','a2','a3','a4','a5','g1','g2','m1','p1','p2','p3','r1'];
-const WE_SCORE_IDS=['m1','b1','b2','b3','g1','r1'];
+const idsOf = blocks => blocks.flatMap(b=>b.items.map(i=>i.id));
+const SCORE_IDS=idsOf(WD);
+const WE_SCORE_IDS=idsOf(WE);
+const POMO_IDS=['a1','a2','a3','a4','a5','p1','p2','p3'];
 const MENTE_IDS=['n1','n2','n3','n4','n5','n6','n7','n8','n9'];
 const MENTE_LABELS=['Sin doomscrolling al despertar','Evité sabotaje digital','Regulé impulsos','Evité anestesiarme','Sostuve incomodidad','Elegí presencia','Actué con coherencia','Me hice responsable de mi energía','Cerré el día con claridad'];
-const MENTE_WEIGHT = 5/9; // 9 ítems × 5/9 = 5pts → max total 20 (laboral) / 13 (finde)
+const MENTE_POINTS = 5;
+const MENTE_WEIGHT = MENTE_POINTS/9; // 9 ítems × 5/9 = 5pts
 
 let GAS_URL = localStorage.getItem('sov_gas_url') || '';
 let currentDate = new Date();
-let state = { checks:{}, log:'' };
+let state = emptyDay();
+let prevMiss = null; // {ids:Set, tag:string} del día comparable anterior
 let saveTimer = null;
 let loading = false;
+let navSeq = 0;
 let _seq = 0;
 
+function emptyDay(){ return {checks:{},log:'',focus_am:'',focus_pm:'',units:0}; }
 function toKey(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function keyToDate(k){ const [y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
 function isToday(d){ return toKey(d)===toKey(new Date()) }
 function dayType(d){
   const w=d.getDay();
   if(w===0||w===6) return 'weekend';
   if(w===2||w===4) return 'cafe';
   return 'weekday';
+}
+function dayGroup(d){ return dayType(d)==='weekend'?'weekend':'work'; }
+function esc(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function scoreColor(s,m){
   const p=s/m;
@@ -308,20 +350,68 @@ function jsonpCall(url){
   });
 }
 
+// Normaliza la respuesta del GAS y migra registros viejos
+function normalizeDay(raw, key){
+  const d = raw && typeof raw==='object' ? raw : {};
+  const checks = Object.assign({}, d.checks||{});
+  // Fin de semana: "desperté" vivía en m1, ahora es w1
+  if(dayType(keyToDate(key))==='weekend' && checks.m1===true && checks.w1===undefined){
+    checks.w1 = true;
+    delete checks.m1;
+  }
+  const units = parseInt(d.units,10);
+  return {
+    checks,
+    log: d.log||'',
+    focus_am: d.focus_am||'',
+    focus_pm: d.focus_pm||'',
+    units: units>0 ? units : 0
+  };
+}
+
+function hasData(d){
+  return Object.keys(d.checks||{}).length>0 || !!(d.log||'').trim() ||
+    !!(d.focus_am||'').trim() || !!(d.focus_pm||'').trim() || d.units>0;
+}
+
 async function loadDay(date){
-  if(!GAS_URL) return {checks:{},log:''};
+  if(!GAS_URL) return emptyDay();
   const url=`${GAS_URL}?action=get&date=${date}`;
-  try{ return await jsonpCall(url); }
-  catch{ return {checks:{},log:''}; }
+  try{ return normalizeDay(await jsonpCall(url), date); }
+  catch{ return emptyDay(); }
+}
+
+// Carga varios días y devuelve {key: {date,dt,max,score,hasData,...data}}
+async function loadDays(dates){
+  const today = new Date();
+  const list = await Promise.all(dates.map(async d => {
+    const dt = dayType(d);
+    const isFuture = d > today;
+    const data = isFuture ? emptyDay() : await loadDay(toKey(d));
+    return Object.assign(data, {
+      date:d, key:toKey(d), dt, isFuture,
+      max:getMax(dt), score:calcDayScore(data.checks, dt),
+      hasData: !isFuture && hasData(data)
+    });
+  }));
+  const byKey = {};
+  list.forEach(r => { byKey[r.key] = r; });
+  return {list, byKey};
 }
 
 async function saveDay(){
   if(!GAS_URL) return;
+  clearTimeout(saveTimer); saveTimer=null;
   const btn=document.getElementById('btn-save');
   btn.textContent='···';
   btn.classList.remove('saved');
+  // snapshot antes de cualquier await: la fecha y el estado pueden cambiar al navegar
   const date=toKey(currentDate);
-  const payload=encodeURIComponent(JSON.stringify({checks:state.checks,log:state.log}));
+  const payload=encodeURIComponent(JSON.stringify({
+    checks:state.checks, log:state.log,
+    focus_am:state.focus_am, focus_pm:state.focus_pm, units:state.units,
+    score:calcScore()
+  }));
   const url=`${GAS_URL}?action=save&date=${date}&payload=${payload}`;
   try{
     await jsonpCall(url);
@@ -340,8 +430,16 @@ function debouncedSave(){
 }
 
 function getBlocks(dt){ return dt==='weekend'?WE:WD; }
-function getMax(dt){ return dt==='weekend'?13:20; }
 function getScoreIds(dt){ return dt==='weekend'?WE_SCORE_IDS:SCORE_IDS; }
+function getMax(dt){ return getScoreIds(dt).length + MENTE_POINTS; }
+
+function labelFor(id, dt){
+  const m = MENTE_IDS.indexOf(id);
+  if(m>=0) return MENTE_LABELS[m];
+  const own = getBlocks(dt).flatMap(b=>b.items).find(i=>i.id===id);
+  if(own) return own.label;
+  return [...WD,...WE].flatMap(b=>b.items).find(i=>i.id===id)?.label || id;
+}
 
 function calcDayScore(checks, dt){
   const phys = getScoreIds(dt).filter(id=>checks[id]).length;
@@ -355,6 +453,66 @@ function calcScore(){
 
 function fmtScore(s){
   return Number.isInteger(s) ? String(s) : s.toFixed(1);
+}
+
+// ── Nunca dos seguidos ──
+// Día comparable anterior: primer día del mismo grupo (laboral/café vs finde) hasta 7 días atrás
+function prevComparable(d){
+  const g = dayGroup(d);
+  for(let i=1;i<=7;i++){
+    const p = addDays(d,-i);
+    if(dayGroup(p)===g) return p;
+  }
+  return null;
+}
+// ids presentes en ambos días (físicos compartidos + Mente)
+function sharedIds(dtA, dtB){
+  const b = new Set(getScoreIds(dtB));
+  return [...getScoreIds(dtA).filter(id=>b.has(id)), ...MENTE_IDS];
+}
+function missTag(cur, prev){
+  const diff = Math.round((cur - prev)/86400000);
+  return diff===1 ? 'ayer no' : DAYS_SHORT[prev.getDay()].toLowerCase()+' no';
+}
+// Ítems fallados en dos días comparables consecutivos, para los días dados
+function twiceMissed(byKey, days){
+  const out = new Map();
+  days.forEach(d => {
+    const cur = byKey[toKey(d)];
+    if(!cur || !cur.hasData) return;
+    const p = prevComparable(d);
+    const prev = p && byKey[toKey(p)];
+    if(!prev || !prev.hasData) return;
+    sharedIds(prev.dt, cur.dt).forEach(id => {
+      if(prev.checks[id] || cur.checks[id]) return;
+      const e = out.get(id) || {id, label:labelFor(id, cur.dt), n:0};
+      e.n++;
+      out.set(id, e);
+    });
+  });
+  return [...out.values()].sort((a,b)=>b.n-a.n);
+}
+// Semana + los 7 días previos (para comparar lunes y sábado con la semana anterior)
+async function loadWeekWithContext(days){
+  const all = [...Array.from({length:7},(_,i)=>addDays(days[0], i-7)), ...days];
+  const {byKey} = await loadDays(all);
+  return {week: days.map(d=>byKey[toKey(d)]), byKey};
+}
+
+function weekStats(week){
+  const done = week.filter(r=>r.hasData);
+  const pomos = done.reduce((a,r)=>a+POMO_IDS.filter(id=>r.checks[id]).length, 0);
+  const units = week.reduce((a,r)=>a+(r.units||0), 0);
+  const focus = [];
+  week.forEach(r => {
+    if(r.focus_am?.trim()) focus.push({date:r.date, part:'AM', text:r.focus_am.trim()});
+    if(r.focus_pm?.trim()) focus.push({date:r.date, part:'PM', text:r.focus_pm.trim()});
+  });
+  return {pomos, units, focus};
+}
+function getUnitsTarget(){
+  const t = parseInt(localStorage.getItem('sov_units_target'),10);
+  return t>0 ? t : 0;
 }
 
 function updateHeader(){
@@ -381,6 +539,16 @@ function updateHeader(){
   document.getElementById('f-max').textContent='/'+max;
 }
 
+function rowHtml(id, label){
+  const on = state.checks[id] ? ' on' : '';
+  const miss = prevMiss && prevMiss.ids.has(id) ? `<span class="s-miss">${prevMiss.tag}</span>` : '';
+  return `
+        <div class="s-row" data-id="${id}">
+          <div class="s-cb${on}">✓</div>
+          <span class="s-rl${on}">${label}</span>${miss}
+        </div>`;
+}
+
 function renderBlocks(){
   const dt=dayType(currentDate);
   const blocks=getBlocks(dt);
@@ -390,14 +558,19 @@ function renderBlocks(){
   let html=blocks.map(block=>`
     <div class="s-block">
       <div class="s-bh">
-        <div class="s-bt${block.id==='claudette'?' clau':''}">${block.title}</div>
+        <div class="s-bt">${block.title}</div>
         <div class="s-btime">${block.time}</div>
       </div>
-      ${block.items.map(item=>`
-        <div class="s-row" data-id="${item.id}">
-          <div class="s-cb${state.checks[item.id]?' on':''}">✓</div>
-          <span class="s-rl${state.checks[item.id]?' on':''}">${item.label}</span>
-        </div>`).join('')}
+      ${block.items.map(item=>rowHtml(item.id, item.label)).join('')}
+      ${block.focus?`
+        <input class="s-fi" type="text" data-field="${block.focus}" placeholder="¿En qué trabajaste?" value="${esc(state[block.focus]||'')}" maxlength="140">`:''}
+      ${block.units?`
+        <div class="s-units">
+          <div class="s-ul">Avance del día<span class="s-us">módulos, lecciones, labs</span></div>
+          <button class="s-ub" id="units-dec" aria-label="Restar"${state.units>0?'':' disabled'}>−</button>
+          <div class="s-uv" id="units-val">${state.units}</div>
+          <button class="s-ub" id="units-inc" aria-label="Sumar">+</button>
+        </div>`:''}
     </div>`).join('');
 
   if(isCafe){
@@ -418,43 +591,68 @@ function renderBlocks(){
         <div class="s-bt" style="color:var(--amber)">Mente</div>
         <div class="s-btime">Cierre · 0.5pt c/u</div>
       </div>
-      ${MENTE_IDS.map((id,i)=>`
-        <div class="s-row" data-id="${id}">
-          <div class="s-cb${state.checks[id]?' on':''}">✓</div>
-          <span class="s-rl${state.checks[id]?' on':''}">${MENTE_LABELS[i]}</span>
-        </div>`).join('')}
+      ${MENTE_IDS.map((id,i)=>rowHtml(id, MENTE_LABELS[i])).join('')}
     </div>`;
 
   container.innerHTML=html;
-  document.querySelectorAll('.s-row[data-id]').forEach(row=>{
+  container.querySelectorAll('.s-row[data-id]').forEach(row=>{
     row.addEventListener('click',()=>{
+      if(loading) return;
       const id=row.dataset.id;
       state.checks[id]=!state.checks[id];
       updateHeader();
-      const cb=row.querySelector('.s-cb');
-      const rl=row.querySelector('.s-rl');
-      cb.classList.toggle('on',!!state.checks[id]);
-      rl.classList.toggle('on',!!state.checks[id]);
+      row.querySelector('.s-cb').classList.toggle('on',!!state.checks[id]);
+      row.querySelector('.s-rl').classList.toggle('on',!!state.checks[id]);
       debouncedSave();
     });
   });
+  container.querySelectorAll('.s-fi[data-field]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      if(loading) return;
+      state[inp.dataset.field]=inp.value;
+      debouncedSave();
+    });
+  });
+  const dec=document.getElementById('units-dec');
+  const inc=document.getElementById('units-inc');
+  if(dec&&inc){
+    const setUnits=n=>{
+      if(loading) return;
+      state.units=Math.max(0,n);
+      document.getElementById('units-val').textContent=state.units;
+      dec.disabled=state.units===0;
+      debouncedSave();
+    };
+    dec.addEventListener('click',()=>setUnits(state.units-1));
+    inc.addEventListener('click',()=>setUnits(state.units+1));
+  }
 }
 
 function renderLog(){
   const ta=document.getElementById('log-ta');
   ta.value=state.log||'';
-  ta.oninput=e=>{ state.log=e.target.value; debouncedSave(); };
+  ta.oninput=e=>{ if(loading) return; state.log=e.target.value; debouncedSave(); };
 }
 
 async function gotoDate(d){
+  // si hay un guardado pendiente, guardarlo sobre la fecha actual antes de navegar
+  if(saveTimer) saveDay();
+  const my=++navSeq;
   currentDate=d;
   loading=true;
   document.getElementById('h-loading').style.display='inline';
   document.getElementById('btn-save').textContent='Guardar';
   document.getElementById('btn-save').classList.remove('saved');
   updateHeader();
-  const data=await loadDay(toKey(d));
-  state={checks:data.checks||{},log:data.log||''};
+  const p=prevComparable(d);
+  const [data, prev]=await Promise.all([loadDay(toKey(d)), loadDay(toKey(p))]);
+  if(my!==navSeq) return; // se navegó a otra fecha mientras cargaba
+  state=data;
+  prevMiss=null;
+  if(hasData(prev)){
+    const ids=sharedIds(dayType(p), dayType(d)).filter(id=>!prev.checks[id]);
+    prevMiss={ids:new Set(ids), tag:missTag(d,p)};
+  }
   loading=false;
   document.getElementById('h-loading').style.display='none';
   updateHeader();
@@ -503,19 +701,12 @@ async function loadDashboard(){
   document.getElementById('dash-content').innerHTML = '<div class="d-loading">···</div>';
   document.getElementById('dash-loading').style.display = 'inline';
 
-  const results = await Promise.all(days.map(async d => {
-    const data = await loadDay(toKey(d));
-    const dt = dayType(d);
-    const max = getMax(dt);
-    const isFuture = d > new Date();
-    const score = calcDayScore(data.checks||{}, dt);
-    return {date:d, score, max, hasData: !isFuture && Object.keys(data.checks||{}).length > 0, isFuture};
-  }));
+  const {list: results} = await loadDays(days);
 
   document.getElementById('dash-loading').style.display = 'none';
 
   const doneResults = results.filter(r => !r.isFuture);
-  const totalScore = doneResults.reduce((a,r) => a + r.score, 0);
+  const totalScore = Math.round(doneResults.reduce((a,r) => a + r.score, 0)*10)/10;
   const totalMax   = doneResults.reduce((a,r) => a + r.max, 0);
   const pct = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
   const weekColor = totalMax > 0 ? scoreColor(totalScore, totalMax) : 'var(--hint)';
@@ -528,7 +719,7 @@ async function loadDashboard(){
     const scoreHtml = r.isFuture
       ? `<span class="d-empty">·</span>`
       : r.hasData
-        ? `<span class="d-score" style="color:${c}">${r.score}<span style="font-size:12px;color:var(--hint)">/${r.max}</span></span>`
+        ? `<span class="d-score" style="color:${c}">${fmtScore(r.score)}<span style="font-size:12px;color:var(--hint)">/${r.max}</span></span>`
         : `<span class="d-empty">—</span>`;
     return `
     <div class="d-row">
@@ -549,12 +740,50 @@ async function loadDashboard(){
   <div class="d-summary">
     <div class="d-sum-label">Score<br>semanal</div>
     <div style="text-align:right">
-      <div class="d-sum-val" style="color:${weekColor}">${totalScore}</div>
-      <div class="d-sum-pct">${pct}% · ${totalScore}/${totalMax}</div>
+      <div class="d-sum-val" style="color:${weekColor}">${fmtScore(totalScore)}</div>
+      <div class="d-sum-pct">${pct}% · ${fmtScore(totalScore)}/${totalMax}</div>
     </div>
   </div>`;
 
+  const ws = weekStats(results);
+  const target = getUnitsTarget();
+  const unitsColor = target && ws.units >= target ? 'var(--green)' : 'var(--text)';
+  html += `
+  <div class="d-stats">
+    <div class="d-stat">
+      <div class="d-sum-label">Pomodoros</div>
+      <div class="d-stat-val">${ws.pomos}</div>
+    </div>
+    <div class="d-stat tap" id="d-units" title="Toca para fijar la meta semanal">
+      <div class="d-sum-label">Avance${target?' · meta':' · + meta'}</div>
+      <div class="d-stat-val" style="color:${unitsColor}">${ws.units}${target?`<small>/${target}</small>`:''}</div>
+    </div>
+  </div>`;
+
+  if(ws.focus.length){
+    html += `
+  <div class="d-focus">
+    <div class="d-hm-title">Foco de la semana</div>
+    ${ws.focus.map(f=>`
+    <div class="d-focus-row">
+      <span class="d-focus-day">${DAYS_SHORT[f.date.getDay()]} ${f.part}</span>
+      <span class="d-focus-txt">${esc(f.text)}</span>
+    </div>`).join('')}
+  </div>`;
+  }
+
   document.getElementById('dash-content').innerHTML = html;
+  document.getElementById('d-units').addEventListener('click', editUnitsTarget);
+}
+
+function editUnitsTarget(){
+  const cur = getUnitsTarget();
+  const val = prompt('Meta semanal de avance (vacío para quitarla)', cur || '');
+  if(val === null) return;
+  const n = parseInt(val, 10);
+  if(n > 0) localStorage.setItem('sov_units_target', String(n));
+  else localStorage.removeItem('sov_units_target');
+  loadDashboard();
 }
 
 async function loadHeatmap(){
@@ -574,16 +803,8 @@ async function loadHeatmap(){
     return d;
   });
 
-  const results = await Promise.all(days.map(async d => {
-    const isFuture = d > today;
-    if(isFuture) return {date:d, pct:-1, isFuture:true};
-    const data = await loadDay(toKey(d));
-    const dt = dayType(d);
-    const max = getMax(dt);
-    const score = calcDayScore(data.checks||{}, dt);
-    const hasData = Object.keys(data.checks||{}).length > 0;
-    return {date:d, pct: hasData ? score/max : -1, isFuture:false};
-  }));
+  const {list} = await loadDays(days);
+  const results = list.map(r => ({date:r.date, isFuture:r.isFuture, pct: r.hasData ? r.score/r.max : -1}));
 
   function pctToColor(pct){
     if(pct<0) return 'var(--border)';
@@ -603,9 +824,8 @@ async function loadHeatmap(){
 
   grid.querySelectorAll('.d-hm-cell:not(.future)').forEach(cell => {
     cell.addEventListener('click', () => {
-      const [y,m,d] = cell.dataset.key.split('-').map(Number);
       showTab('day');
-      gotoDate(new Date(y, m-1, d));
+      gotoDate(keyToDate(cell.dataset.key));
     });
   });
 }
@@ -618,32 +838,29 @@ function isoWeek(d){
   return `${tmp.getFullYear()}-W${Math.ceil(((tmp-yearStart)/86400000+1)/7)}`;
 }
 
+function topMissed(done){
+  const misses = {};
+  done.forEach(r=>{
+    [...getScoreIds(r.dt),...MENTE_IDS].forEach(id=>{
+      misses[id]=(misses[id]||0)+(r.checks[id]?0:1);
+    });
+  });
+  const top = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0];
+  if(!top || top[1]===0) return null;
+  return {id:top[0], n:top[1], label:labelFor(top[0], done.find(r=>getScoreIds(r.dt).includes(top[0]))?.dt||'weekday')};
+}
+
 async function checkWeeklySummary(){
   const today = new Date();
   if(today.getDay() !== 1) return; // only on Monday
-  const dow = today.getDay();
-  const lastMon = new Date(today);
-  lastMon.setDate(today.getDate() - 7);
+  const lastMon = addDays(today, -7);
   const weekKey = 'sov_wseen_' + isoWeek(lastMon);
   if(localStorage.getItem(weekKey)) return;
 
-  // load last week Mon–Sun
-  const days = Array.from({length:7}, (_,i) => {
-    const d = new Date(lastMon);
-    d.setDate(lastMon.getDate()+i);
-    return d;
-  });
+  const days = Array.from({length:7}, (_,i) => addDays(lastMon, i));
+  const {week, byKey} = await loadWeekWithContext(days);
 
-  const results = await Promise.all(days.map(async d => {
-    const data = await loadDay(toKey(d));
-    const dt = dayType(d);
-    const max = getMax(dt);
-    const score = calcDayScore(data.checks||{}, dt);
-    const hasData = Object.keys(data.checks||{}).length > 0;
-    return {date:d, score, max, checks:data.checks||{}, hasData};
-  }));
-
-  const doneResults = results.filter(r => r.hasData);
+  const doneResults = week.filter(r => r.hasData);
   if(!doneResults.length) return;
 
   const totalScore = Math.round(doneResults.reduce((a,r)=>a+r.score,0)*10)/10;
@@ -651,26 +868,19 @@ async function checkWeeklySummary(){
   const pct = Math.round((totalScore/totalMax)*100);
 
   const bestDay = doneResults.reduce((a,b) => (b.score/b.max > a.score/a.max ? b : a));
+  const miss = topMissed(doneResults);
+  const twice = twiceMissed(byKey, days);
 
-  const allIds = [...new Set(doneResults.flatMap(r => [...getScoreIds(dayType(r.date)), ...MENTE_IDS]))];
-  const misses = {};
-  allIds.forEach(id => { misses[id] = 0; });
-  doneResults.forEach(r => {
-    [...getScoreIds(dayType(r.date)), ...MENTE_IDS].forEach(id => {
-      if(!r.checks[id]) misses[id]++;
-    });
-  });
-  const missedId = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0]?.[0];
-  const menteIdx = MENTE_IDS.indexOf(missedId);
-  const itemLabel = menteIdx>=0 ? MENTE_LABELS[menteIdx] : ([...WD,...WE].flatMap(b=>b.items).find(i=>i.id===missedId)?.label || missedId);
-
-  const sun = new Date(lastMon); sun.setDate(lastMon.getDate()+6);
+  const sun = addDays(lastMon, 6);
   document.getElementById('ws-range').textContent =
     `${lastMon.getDate()} ${MONTHS_SHORT[lastMon.getMonth()]} – ${sun.getDate()} ${MONTHS_SHORT[sun.getMonth()]}`;
-  document.getElementById('ws-score').textContent = `${totalScore} · ${pct}%`;
+  document.getElementById('ws-score').textContent = `${fmtScore(totalScore)} · ${pct}%`;
   document.getElementById('ws-score').style.color = pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
   document.getElementById('ws-best').textContent = DAYS[bestDay.date.getDay()];
-  document.getElementById('ws-miss').textContent = itemLabel || '—';
+  document.getElementById('ws-miss').textContent = miss ? miss.label : '—';
+  document.getElementById('ws-twice-n').textContent = twice.length || '0';
+  document.getElementById('ws-twice-n').style.color = twice.length ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('ws-twice').innerHTML = twice.map(t=>`· ${esc(t.label)}${t.n>1?` ×${t.n}`:''}`).join('<br>');
   document.getElementById('ws-overlay').classList.add('show');
 
   localStorage.setItem(weekKey, '1');
@@ -686,12 +896,11 @@ function buildDayReport(){
   const score = calcDayScore(state.checks, dt);
   const max = getMax(dt);
   const pct = Math.round((score/max)*100);
-  const allItems = [...WD,...WE].flatMap(b=>b.items).filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
 
-  const physDone   = physIds.filter(id=>state.checks[id]).map(id=>allItems.find(i=>i.id===id)?.label||id);
-  const physMissed = physIds.filter(id=>!state.checks[id]).map(id=>allItems.find(i=>i.id===id)?.label||id);
-  const menteDone   = MENTE_IDS.filter(id=>state.checks[id]).map(id=>MENTE_LABELS[MENTE_IDS.indexOf(id)]);
-  const menteMissed = MENTE_IDS.filter(id=>!state.checks[id]).map(id=>MENTE_LABELS[MENTE_IDS.indexOf(id)]);
+  const physDone   = physIds.filter(id=>state.checks[id]).map(id=>labelFor(id,dt));
+  const physMissed = physIds.filter(id=>!state.checks[id]).map(id=>labelFor(id,dt));
+  const menteDone   = MENTE_IDS.filter(id=>state.checks[id]).map(id=>labelFor(id,dt));
+  const menteMissed = MENTE_IDS.filter(id=>!state.checks[id]).map(id=>labelFor(id,dt));
 
   const streakEl = document.getElementById('h-streak-n');
   const streak = document.getElementById('h-streak').style.display!=='none' ? streakEl.textContent : '0';
@@ -712,6 +921,13 @@ function buildDayReport(){
   txt += menteDone.length ? menteDone.map(l=>`- ${l}`).join('\n') : '- (ninguno)';
   if(menteMissed.length){ txt += `\n\nBLOQUE MENTE ✗\n`+menteMissed.map(l=>`- ${l}`).join('\n'); }
 
+  if(dt!=='weekend'){
+    txt += `\n\nFOCO Y AVANCE\n`;
+    txt += `- Foco AM: ${state.focus_am?.trim() || '(sin registrar)'}\n`;
+    txt += `- Foco PM: ${state.focus_pm?.trim() || '(sin registrar)'}\n`;
+    txt += `- Avance del día: ${state.units} unidades`;
+  }
+
   if(state.checks['cafe_ex']) txt += `\n\nNOTA: Trabajó desde café hoy`;
   if(state.log?.trim()) txt += `\n\nLOG DEL DÍA:\n${state.log.trim()}`;
 
@@ -721,48 +937,43 @@ function buildDayReport(){
 
 async function buildWeekReport(){
   const days = getWeekDays(weekOffset);
-  const results = await Promise.all(days.map(async d=>{
-    const data = await loadDay(toKey(d));
-    const dt = dayType(d);
-    const max = getMax(dt);
-    const score = calcDayScore(data.checks||{}, dt);
-    const hasData = Object.keys(data.checks||{}).length>0;
-    return {date:d,score,max,hasData,checks:data.checks||{},log:data.log||''};
-  }));
+  const {week: results, byKey} = await loadWeekWithContext(days);
 
   const done = results.filter(r=>r.hasData);
   const totalScore = Math.round(done.reduce((a,r)=>a+r.score,0)*10)/10;
   const totalMax   = done.reduce((a,r)=>a+r.max,0);
   const pct = totalMax>0?Math.round((totalScore/totalMax)*100):0;
 
-  const allItems = [...WD,...WE].flatMap(b=>b.items).filter((item,i,a)=>a.findIndex(x=>x.id===item.id)===i);
-
-  const misses = {};
-  done.forEach(r=>{
-    [...getScoreIds(dayType(r.date)),...MENTE_IDS].forEach(id=>{
-      misses[id]=(misses[id]||0)+(r.checks[id]?0:1);
-    });
-  });
-  const topMiss = Object.entries(misses).sort((a,b)=>b[1]-a[1])[0];
-  const menteIdx = topMiss ? MENTE_IDS.indexOf(topMiss[0]) : -1;
-  const topMissLabel = topMiss ? (menteIdx>=0 ? MENTE_LABELS[menteIdx] : (allItems.find(i=>i.id===topMiss[0])?.label||topMiss[0])) : '—';
+  const miss = topMissed(done);
+  const twice = twiceMissed(byKey, days);
+  const ws = weekStats(results);
+  const target = getUnitsTarget();
 
   const sun = days[6];
   let txt = `SOVEREIGN OS — REPORTE SEMANAL\n`;
   txt += `===============================\n`;
   txt += `Semana: ${days[0].getDate()} ${MONTHS_SHORT[days[0].getMonth()]} – ${sun.getDate()} ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}\n`;
-  txt += `Score total: ${totalScore}/${totalMax} (${pct}%)\n\n`;
+  txt += `Score total: ${fmtScore(totalScore)}/${totalMax} (${pct}%)\n\n`;
 
   txt += `DÍA A DÍA:\n`;
   results.forEach(r=>{
     const p = r.hasData?Math.round((r.score/r.max)*100):null;
     const tag = p===null?'sin datos':p>=80?'✓':p>=50?'~':'✗';
-    const label = r.hasData?`${r.score}/${r.max} (${p}%) ${tag}`:'—';
+    const label = r.hasData?`${fmtScore(r.score)}/${r.max} (${p}%) ${tag}`:'—';
     txt += `${DAYS_SHORT[r.date.getDay()]} ${r.date.getDate()} ${MONTHS_SHORT[r.date.getMonth()]}: ${label}\n`;
   });
 
-  txt += `\nÍTEM MÁS FALLADO: ${topMissLabel}`;
-  if(topMiss) txt += ` (${topMiss[1]}/${done.length} días)`;
+  txt += `\nÍTEM MÁS FALLADO: ${miss ? `${miss.label} (${miss.n}/${done.length} días)` : '—'}`;
+
+  txt += `\n\nFALLADOS DOS SEGUIDOS:`;
+  txt += twice.length ? '\n'+twice.map(t=>`- ${t.label}${t.n>1?` (${t.n} veces)`:''}`).join('\n') : ' ninguno';
+
+  txt += `\n\nFOCO Y AVANCE:\n`;
+  txt += `- Pomodoros: ${ws.pomos}\n`;
+  txt += `- Avance: ${ws.units}${target?` / meta ${target}`:''} unidades`;
+  if(ws.focus.length){
+    txt += `\n- Foco:\n`+ws.focus.map(f=>`  [${DAYS_SHORT[f.date.getDay()]} ${f.part}] ${f.text}`).join('\n');
+  }
 
   const logs = results.filter(r=>r.log?.trim());
   if(logs.length){
@@ -790,20 +1001,9 @@ async function copyToClipboard(text, btn){
 
 async function calcStreak(){
   const today = new Date();
-  const days = [];
-  for(let i=0; i<30; i++){
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    days.push(d);
-  }
-  const results = await Promise.all(days.map(async d => {
-    const data = await loadDay(toKey(d));
-    const dt = dayType(d);
-    const max = getMax(dt);
-    const score = calcDayScore(data.checks||{}, dt);
-    const hasData = Object.keys(data.checks||{}).length > 0;
-    return { pct: hasData ? score/max : -1 };
-  }));
+  const days = Array.from({length:30}, (_,i) => addDays(today, -i));
+  const {list} = await loadDays(days);
+  const results = list.map(r => ({pct: r.hasData ? r.score/r.max : -1}));
 
   // if today has no data yet, start counting from yesterday
   let start = 0;
@@ -826,10 +1026,10 @@ async function calcStreak(){
 
 function initListeners(){
   document.getElementById('btn-prev').addEventListener('click',()=>{
-    const d=new Date(currentDate);d.setDate(d.getDate()-1);gotoDate(d);
+    gotoDate(addDays(currentDate,-1));
   });
   document.getElementById('btn-next').addEventListener('click',()=>{
-    const d=new Date(currentDate);d.setDate(d.getDate()+1);gotoDate(d);
+    gotoDate(addDays(currentDate,1));
   });
   document.getElementById('btn-save').addEventListener('click',saveDay);
   document.getElementById('btn-copy-day').addEventListener('click',function(){
@@ -838,6 +1038,7 @@ function initListeners(){
   document.getElementById('btn-copy-week').addEventListener('click',async function(){
     const btn=this; btn.textContent='···';
     const txt=await buildWeekReport();
+    btn.textContent='IA';
     copyToClipboard(txt, btn);
   });
   document.getElementById('dash-prev').addEventListener('click',()=>{
